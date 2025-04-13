@@ -69,6 +69,7 @@ class ListItem extends StatelessWidget {
                     builder: (context, snapshot) {
                       if (siteInfo.images.length > 0 &&
                           siteInfo.images[0] != null) {
+                        print("List item if statement executed");
                         return Image.memory(
                           siteInfo.images.first!,
                           height: 400,
@@ -78,6 +79,7 @@ class ListItem extends StatelessWidget {
                       } else if (snapshot.connectionState ==
                               ConnectionState.done &&
                           snapshot.data != null) {
+                        print("List item else if statement reached");
                         return Image.memory(
                           snapshot.data!,
                           height: 400,
@@ -85,6 +87,7 @@ class ListItem extends StatelessWidget {
                           fit: BoxFit.cover,
                         );
                       } else {
+                        print("List item else statement reached");
                         return Image.asset(
                           'assets/images/faulkner_thumbnail.png',
                           height: 400,

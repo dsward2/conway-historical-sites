@@ -236,30 +236,23 @@ class _HistSitePage extends State<HistSitePage> {
                       },
                       child: Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child:
-                              //TODO: These should be future builders as well!!!
-                              FutureBuilder<Uint8List?>(
+                          child: FutureBuilder<Uint8List?>(
                             future: widget.app_state
-                                .getImage(widget.histSite.imageUrls.first),
+                                .getImage(widget.histSite.imageUrls[index]),
                             builder: (context, snapshot) {
-                              if (widget.histSite.images.length > 0 &&
-                                  widget.histSite.images[index] != null) {
-                                return Image.memory(
-                                  widget.histSite.images[index]!,
-                                  fit: BoxFit.cover,
-                                );
-                              } else if (snapshot.connectionState ==
-                                      ConnectionState.done &&
-                                  snapshot.data != null) {
-                                return Image.memory(
-                                  snapshot.data!,
-                                  fit: BoxFit.cover,
-                                );
-                              } else {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return Center(
+                                    child: CircularProgressIndicator());
+                              } else if (snapshot.hasError ||
+                                  !snapshot.hasData) {
                                 return Image.asset(
                                   'assets/images/faulkner_thumbnail.png',
                                   fit: BoxFit.cover,
                                 );
+                              } else {
+                                return Image.memory(snapshot.data!,
+                                    fit: BoxFit.cover);
                               }
                             },
                           )),

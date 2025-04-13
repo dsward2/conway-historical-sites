@@ -30,11 +30,15 @@ class _AdminListPageState extends State<AdminListPage> {
   final storage = FirebaseStorage.instance;
   final storageRef = FirebaseStorage.instance.ref();
   var uuid = Uuid();
+  List<siteFilter> chosenFilters = [];
+  List<siteFilter> acceptableFilters = [];
 
   @override
   void initState() {
     super.initState();
     updateTimer = Timer.periodic(const Duration(milliseconds: 500), _update);
+    acceptableFilters.addAll(siteFilter.values);
+    acceptableFilters.remove(siteFilter.Other);
   }
 
   void _update(Timer timer) {
@@ -119,8 +123,6 @@ class _AdminListPageState extends State<AdminListPage> {
       });
     }
   }
-
-  List<siteFilter> chosenFilters = [];
 
   Future<void> _showAddSiteDialog() async {
     final nameController = TextEditingController();
@@ -217,6 +219,53 @@ class _AdminListPageState extends State<AdminListPage> {
                               ))
                           .toList(),
                     ],
+
+                    MenuAnchor(
+                        builder: (BuildContext context,
+                            MenuController controller, Widget? child) {
+                          return ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromARGB(255, 218, 186, 130),
+                              ),
+                              // focusNode: _buttonFocusNode,
+                              onPressed: () {
+                                if (controller.isOpen) {
+                                  controller.close();
+                                } else {
+                                  controller.open();
+                                }
+                              },
+                              child: const Text("Add Filters"));
+                        },
+                        menuChildren: acceptableFilters
+                            .map((filter) => CheckboxMenuButton(
+                                closeOnActivate: false,
+                                value: chosenFilters.contains(filter),
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (!chosenFilters.contains(filter)) {
+                                      chosenFilters.add(filter);
+                                      print(chosenFilters);
+                                    } else {
+                                      chosenFilters.remove(filter);
+                                      print(chosenFilters);
+                                    }
+                                  });
+                                },
+                                child: Text((filter.toString())
+                                    .replaceAll("siteFilter.", ""))))
+                            .toList()
+
+                        // [
+                        //   CheckboxMenuButton(
+                        //       value: false,
+                        //       onChanged: (bool? value) {
+                        //         print("changed");
+                        //       },
+                        //       child: const Text("Message"))
+                        // ]
+                        ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
