@@ -318,98 +318,105 @@ class _ListPageState extends State<ListPage> {
         context: context,
         builder: (context) {
           return AlertDialog(
-              alignment: Alignment.topCenter,
-              title: Text("Search"),
-              content: SearchAnchor(
-                  isFullScreen: false,
-                  viewConstraints:
-                      BoxConstraints(), //this works for some reason despite having no arguments
-                  searchController: _searchController,
-                  builder: (context, controller) {
-                    return SearchBar(
-                      leading: Icon(Icons.search),
-                      trailing: [
-                        IconButton(
-                          icon: Icon(Icons.arrow_right_alt),
-                          onPressed: () {
-                            List<HistSite> lst = [];
-                            lst.addAll(fullSiteList.where((HistSite site) {
-                              return site.name
-                                  .toLowerCase()
-                                  .contains(controller.text.toLowerCase());
-                            }));
-                            setState(() {
-                              searchSites = lst;
-                            });
-                            onDisplaySitesChanged();
-                            Navigator.pop(context);
-                          },
-                        )
-                      ],
-                      controller: _searchController,
-                      onTap: () {
-                        controller.openView();
-                      },
-                      onChanged: (query) {
-                        print("here!");
-                        controller.closeView(query);
-                      },
+            title: const Text("Search"),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20.0)),
+            elevation: 8,
+            backgroundColor: const Color.fromARGB(255, 238, 214, 196),
+            alignment: Alignment.topCenter,
+            content: SearchAnchor(
+                isFullScreen: false,
+                viewConstraints:
+                    BoxConstraints(), //this works for some reason despite having no arguments
+                searchController: _searchController,
+                builder: (context, controller) {
+                  return SearchBar(
+                    backgroundColor: WidgetStatePropertyAll(
+                        Color.fromARGB(255, 238, 214, 196)),
+                    leading: Icon(Icons.search),
+                    trailing: [
+                      IconButton(
+                        icon: Icon(Icons.arrow_right_alt),
+                        onPressed: () {
+                          List<HistSite> lst = [];
+                          lst.addAll(fullSiteList.where((HistSite site) {
+                            return site.name
+                                .toLowerCase()
+                                .contains(controller.text.toLowerCase());
+                          }));
+                          setState(() {
+                            searchSites = lst;
+                          });
+                          onDisplaySitesChanged();
+                          Navigator.pop(context);
+                        },
+                      )
+                    ],
+                    controller: _searchController,
+                    onTap: () {
+                      controller.openView();
+                    },
+                    onChanged: (query) {
+                      print("here!");
+                      controller.closeView(query);
+                    },
 
-                      // onChanged: (query) {
-                      //   List<HistSite> lst = [];
-                      //   lst.addAll(fullSiteList.where((HistSite site) {
-                      //     return site.name
-                      //         .toLowerCase()
-                      //         .contains(query.toLowerCase());
-                      //   }));
-                      //   setState(() {
-                      //     displaySites = lst;
-                      //   });
-                      //   Navigator.pop(context);
-                      // },
-                      onSubmitted: (query) {
-                        controller.closeView(query);
-                        List<HistSite> lst = [];
-                        lst.addAll(fullSiteList.where((HistSite site) {
-                          return site.name
-                              .toLowerCase()
-                              .contains(query.toLowerCase());
-                        }));
+                    // onChanged: (query) {
+                    //   List<HistSite> lst = [];
+                    //   lst.addAll(fullSiteList.where((HistSite site) {
+                    //     return site.name
+                    //         .toLowerCase()
+                    //         .contains(query.toLowerCase());
+                    //   }));
+                    //   setState(() {
+                    //     displaySites = lst;
+                    //   });
+                    //   Navigator.pop(context);
+                    // },
+                    onSubmitted: (query) {
+                      controller.closeView(query);
+                      List<HistSite> lst = [];
+                      lst.addAll(fullSiteList.where((HistSite site) {
+                        return site.name
+                            .toLowerCase()
+                            .contains(query.toLowerCase());
+                      }));
+                      setState(() {
+                        searchSites = lst;
+                      });
+                      onDisplaySitesChanged();
+                      Navigator.pop(context);
+                    },
+                  );
+                },
+                suggestionsBuilder: (context, controller) {
+                  final String input = controller.text.toLowerCase();
+                  List<HistSite> filteredItems = [];
+                  for (HistSite site in fullSiteList) {
+                    if (site.name.toLowerCase().contains(input)) {
+                      filteredItems.add(site);
+                    }
+                  }
+                  // return List<ListTile>.generate(filteredItems.length,
+                  //     (int index) {
+                  //   return ListTile(
+                  //     title: Text(filteredItems[index].name),
+                  //   );
+                  // });
+                  return filteredItems.map((HistSite filteredSite) {
+                    return ListTile(
+                      title: Text(filteredSite.name),
+                      onTap: () {
                         setState(() {
-                          searchSites = lst;
+                          displaySites = [filteredSite];
+                          controller.closeView(filteredSite.name);
                         });
-                        onDisplaySitesChanged();
                         Navigator.pop(context);
                       },
                     );
-                  },
-                  suggestionsBuilder: (context, controller) {
-                    final String input = controller.text.toLowerCase();
-                    List<HistSite> filteredItems = [];
-                    for (HistSite site in fullSiteList) {
-                      if (site.name.toLowerCase().contains(input)) {
-                        filteredItems.add(site);
-                      }
-                    }
-                    // return List<ListTile>.generate(filteredItems.length,
-                    //     (int index) {
-                    //   return ListTile(
-                    //     title: Text(filteredItems[index].name),
-                    //   );
-                    // });
-                    return filteredItems.map((HistSite filteredSite) {
-                      return ListTile(
-                        title: Text(filteredSite.name),
-                        onTap: () {
-                          setState(() {
-                            displaySites = [filteredSite];
-                            controller.closeView(filteredSite.name);
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    });
-                  }));
+                  });
+                }),
+          );
         });
   }
 
