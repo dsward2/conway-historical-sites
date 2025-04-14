@@ -319,20 +319,30 @@ class _ListPageState extends State<ListPage> {
         builder: (context) {
           return AlertDialog(
             title: const Text("Search"),
+            titleTextStyle: const TextStyle(
+                color: Color.fromARGB(255, 72, 52, 52),
+                fontSize: 32.0,
+                fontWeight: FontWeight.bold),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20.0)),
+                borderRadius: BorderRadius.circular(20.0),
+                side: BorderSide(
+                    color: Color.fromARGB(255, 72, 52, 52), width: 2.0)),
             elevation: 8,
             backgroundColor: const Color.fromARGB(255, 238, 214, 196),
             alignment: Alignment.topCenter,
             content: SearchAnchor(
+                dividerColor: Color.fromARGB(255, 72, 52, 52),
+                viewSide: BorderSide(
+                    color: Color.fromARGB(255, 72, 52, 52), width: 2.0),
+                viewBackgroundColor: const Color.fromARGB(255, 238, 214, 196),
                 isFullScreen: false,
                 viewConstraints:
                     BoxConstraints(), //this works for some reason despite having no arguments
                 searchController: _searchController,
                 builder: (context, controller) {
                   return SearchBar(
-                    backgroundColor: WidgetStatePropertyAll(
-                        Color.fromARGB(255, 238, 214, 196)),
+                    backgroundColor: WidgetStatePropertyAll(Color.fromARGB(
+                        255, 238, 214, 196)), //TODO: This might work?
                     leading: Icon(Icons.search),
                     trailing: [
                       IconButton(
@@ -405,6 +415,10 @@ class _ListPageState extends State<ListPage> {
                   // });
                   return filteredItems.map((HistSite filteredSite) {
                     return ListTile(
+                      titleTextStyle: const TextStyle(
+                          color: Color.fromARGB(255, 72, 52, 52),
+                          fontSize: 24.0,
+                          fontWeight: FontWeight.bold),
                       title: Text(filteredSite.name),
                       onTap: () {
                         setState(() {
