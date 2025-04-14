@@ -79,7 +79,7 @@ class _ListPageState extends State<ListPage> {
   late Map<String, LatLng> siteLocations;
   late Map<String, double> siteDistances;
   late var sorted;
-  late List<siteFilter> activeFilters;
+  late List<siteFilter> activeFilters = [];
   late List<HistSite> searchSites;
 
   @override
@@ -88,12 +88,7 @@ class _ListPageState extends State<ListPage> {
     updateTimer = Timer.periodic(const Duration(milliseconds: 1000), _update);
     displaySites = widget.app_state.historicalSites;
     fullSiteList = widget.app_state.historicalSites;
-    activeFilters = [
-      siteFilter.Hall,
-      siteFilter.Monument,
-      siteFilter.Park,
-      siteFilter.Other
-    ];
+    activeFilters.addAll(siteFilter.values);
     searchSites = fullSiteList;
     // print("INIT STATE");
 

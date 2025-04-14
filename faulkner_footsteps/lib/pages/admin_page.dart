@@ -221,6 +221,14 @@ class _AdminListPageState extends State<AdminListPage> {
                     ],
 
                     MenuAnchor(
+                        style: MenuStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                                const Color.fromARGB(255, 238, 214, 196)),
+                            side: WidgetStatePropertyAll(BorderSide(
+                                color: Color.fromARGB(255, 72, 52, 52),
+                                width: 2.0)),
+                            shape: WidgetStatePropertyAll(RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20.0)))),
                         builder: (BuildContext context,
                             MenuController controller, Widget? child) {
                           return ElevatedButton(
@@ -240,6 +248,11 @@ class _AdminListPageState extends State<AdminListPage> {
                         },
                         menuChildren: acceptableFilters
                             .map((filter) => CheckboxMenuButton(
+                                style: ButtonStyle(
+                                    textStyle: WidgetStatePropertyAll(TextStyle(
+                                        color: Color.fromARGB(255, 72, 52, 52),
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold))),
                                 closeOnActivate: false,
                                 value: chosenFilters.contains(filter),
                                 onChanged: (bool? value) {
@@ -253,8 +266,8 @@ class _AdminListPageState extends State<AdminListPage> {
                                     }
                                   });
                                 },
-                                child: Text((filter.toString())
-                                    .replaceAll("siteFilter.", ""))))
+                                child:
+                                    Text((filter.toString()).replaceAll("siteFilter.", ""))))
                             .toList()
 
                         // [
