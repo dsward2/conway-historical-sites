@@ -336,11 +336,26 @@ class _ListPageState extends State<ListPage> {
                     color: Color.fromARGB(255, 72, 52, 52), width: 2.0),
                 viewBackgroundColor: const Color.fromARGB(255, 238, 214, 196),
                 isFullScreen: false,
+                headerTextStyle: TextStyle(
+                    color: Color.fromARGB(255, 72, 52, 52),
+                    fontSize: 16.0,
+                    fontWeight: FontWeight.bold),
                 viewConstraints:
                     BoxConstraints(), //this works for some reason despite having no arguments
                 searchController: _searchController,
                 builder: (context, controller) {
                   return SearchBar(
+                    // hintStyle: WidgetStatePropertyAll(TextStyle(
+                    //     color: Color.fromARGB(255, 72, 52, 52),
+                    //     fontSize: 16.0,
+                    // fontWeight: FontWeight.bold)),
+
+                    side: WidgetStatePropertyAll(BorderSide(
+                        color: Color.fromARGB(255, 72, 52, 52), width: 2.0)),
+                    textStyle: WidgetStatePropertyAll(TextStyle(
+                        color: Color.fromARGB(255, 72, 52, 52),
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.bold)),
                     backgroundColor: WidgetStatePropertyAll(Color.fromARGB(
                         255, 238, 214, 196)), //TODO: This might work?
                     leading: Icon(Icons.search),
@@ -417,7 +432,7 @@ class _ListPageState extends State<ListPage> {
                     return ListTile(
                       titleTextStyle: const TextStyle(
                           color: Color.fromARGB(255, 72, 52, 52),
-                          fontSize: 24.0,
+                          fontSize: 16.0,
                           fontWeight: FontWeight.bold),
                       title: Text(filteredSite.name),
                       onTap: () {
