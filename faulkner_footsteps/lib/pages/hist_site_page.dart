@@ -240,7 +240,12 @@ class _HistSitePage extends State<HistSitePage> {
                             future: widget.app_state
                                 .getImage(widget.histSite.imageUrls[index]),
                             builder: (context, snapshot) {
-                              if (snapshot.connectionState ==
+                              if (widget.histSite.images.length > 0 &&
+                                  widget.histSite.images[0] != null) {
+                                return Image.memory(
+                                    widget.histSite.images[index]!,
+                                    fit: BoxFit.cover);
+                              } else if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
                                 return Center(
                                     child: CircularProgressIndicator());
