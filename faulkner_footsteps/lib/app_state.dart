@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:faulkner_footsteps/dialogs/filter_Dialog.dart';
 import 'package:faulkner_footsteps/objects/hist_site.dart';
 import 'package:faulkner_footsteps/objects/info_text.dart';
+import 'package:faulkner_footsteps/objects/site_filter.dart';
 import 'package:faulkner_footsteps/pages/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart'
     hide EmailAuthProvider, PhoneAuthProvider;
@@ -32,6 +33,9 @@ class ApplicationState extends ChangeNotifier {
   List<HistSite> _historicalSites = [];
   List<HistSite> get historicalSites => _historicalSites;
 
+  List<SiteFilter> _siteFilters = [];
+  List<SiteFilter> get siteFilters => _siteFilters;
+
   Future<void> init() async {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
@@ -50,6 +54,11 @@ class ApplicationState extends ChangeNotifier {
         // Load achievements when user logs in
         await loadAchievements();
 
+        // Load filters
+        await loadFilters();
+
+        // Site Subscription
+
         _siteSubscription = FirebaseFirestore.instance
             .collection('sites')
             .snapshots()
@@ -64,14 +73,12 @@ class ApplicationState extends ChangeNotifier {
               newBlurbs.add(InfoText(
                   title: values[0], value: values[1], date: values[2]));
             }
-            //convert firebase filters to siteFilters
-            //TODO: ensure that all sitefilters have a if statement here
 
-            List<siteFilter> filters = [];
+            List<SiteFilter> filters = [];
 
             for (String filter
                 in List<String>.from(document.data()["filters"])) {
-              filters.add(siteFilter.values.firstWhere((element) {
+              filters.add(SiteFilter.values.firstWhere((element) {
                 print("STRING NAME: $filter");
                 print("TEST FILTER NAME: ${element.name}");
                 return element.name == filter;
@@ -172,7 +179,7 @@ class ApplicationState extends ChangeNotifier {
 
     List<String> firebaseFriendlyFilterList = [];
 
-    for (siteFilter filter in newSite.filters) {
+    for (SiteFilter filter in newSite.filters) {
       firebaseFriendlyFilterList.add(filter.name);
     }
 
@@ -285,6 +292,30 @@ class ApplicationState extends ChangeNotifier {
       }
     } catch (e) {
       print('Error loading achievements: $e');
+    }
+  }
+
+  //new stuff
+  Future<void> loadFilters() async {
+    if (!_loggedIn) return;
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      //is this try needed?
+      final documents = await FirebaseFirestore.instance
+          .collection("filters")
+          .snapshots()
+          .listen((snapshot) async {
+        for (final document in snapshot.docs) {
+          String name = document.get("name");
+          SiteFilter f = new SiteFilter(name: name);
+          _siteFilters.add(f);
+        }
+      });
+    } catch (e) {
+      print("Error loading filters: $e");
     }
   }
 
