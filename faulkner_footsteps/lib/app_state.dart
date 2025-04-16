@@ -56,6 +56,7 @@ class ApplicationState extends ChangeNotifier {
 
         // Load filters
         await loadFilters();
+        _siteFilters.add(SiteFilter(name: "Other")); //add other site filter
 
         // Site Subscription
 
@@ -78,7 +79,7 @@ class ApplicationState extends ChangeNotifier {
 
             for (String filter
                 in List<String>.from(document.data()["filters"])) {
-              filters.add(SiteFilter.values.firstWhere((element) {
+              filters.add(_siteFilters.firstWhere((element) {
                 print("STRING NAME: $filter");
                 print("TEST FILTER NAME: ${element.name}");
                 return element.name == filter;
@@ -295,7 +296,7 @@ class ApplicationState extends ChangeNotifier {
     }
   }
 
-  //new stuff
+  //new stuff TODO: answer comments. do some research on this
   Future<void> loadFilters() async {
     if (!_loggedIn) return;
 
@@ -306,12 +307,14 @@ class ApplicationState extends ChangeNotifier {
       //is this try needed?
       final documents = await FirebaseFirestore.instance
           .collection("filters")
-          .snapshots()
+          .snapshots() //is the snapshot needed?
           .listen((snapshot) async {
+        //is the listen needed?
         for (final document in snapshot.docs) {
           String name = document.get("name");
           SiteFilter f = new SiteFilter(name: name);
           _siteFilters.add(f);
+          print("filter added: $name");
         }
       });
     } catch (e) {

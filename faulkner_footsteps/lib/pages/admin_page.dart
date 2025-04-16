@@ -5,6 +5,7 @@ import 'package:faulkner_footsteps/app_state.dart';
 import 'package:faulkner_footsteps/dialogs/filter_Dialog.dart';
 import 'package:faulkner_footsteps/objects/hist_site.dart';
 import 'package:faulkner_footsteps/objects/info_text.dart';
+import 'package:faulkner_footsteps/objects/site_filter.dart';
 import 'package:faulkner_footsteps/pages/map_display.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -30,15 +31,15 @@ class _AdminListPageState extends State<AdminListPage> {
   final storage = FirebaseStorage.instance;
   final storageRef = FirebaseStorage.instance.ref();
   var uuid = Uuid();
-  List<siteFilter> chosenFilters = [];
-  List<siteFilter> acceptableFilters = [];
+  List<SiteFilter> chosenFilters = [];
+  List<SiteFilter> acceptableFilters = [];
 
   @override
   void initState() {
     super.initState();
     updateTimer = Timer.periodic(const Duration(milliseconds: 500), _update);
-    acceptableFilters.addAll(siteFilter.values);
-    acceptableFilters.remove(siteFilter.Other);
+    // acceptableFilters.addAll(siteFilter.values);
+    // acceptableFilters.remove(siteFilter.Other);
   }
 
   void _update(Timer timer) {
@@ -353,7 +354,7 @@ class _AdminListPageState extends State<AdminListPage> {
                   ),
                   onPressed: () async {
                     if (chosenFilters.isEmpty) {
-                      chosenFilters.add(siteFilter.Other);
+                      chosenFilters.add(SiteFilter(name: "Other"));
                     }
                     //I think putting an async here is fine.
                     if (nameController.text.isNotEmpty &&

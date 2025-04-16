@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:faulkner_footsteps/app_state.dart';
 import 'package:faulkner_footsteps/dialogs/filter_Dialog.dart';
 import 'package:faulkner_footsteps/objects/hist_site.dart';
+import 'package:faulkner_footsteps/objects/site_filter.dart';
 import 'package:faulkner_footsteps/pages/achievement.dart';
 import 'package:faulkner_footsteps/pages/map_display.dart';
 import 'package:faulkner_footsteps/widgets/logout_button.dart';
@@ -79,7 +80,7 @@ class _ListPageState extends State<ListPage> {
   late Map<String, LatLng> siteLocations;
   late Map<String, double> siteDistances;
   late var sorted;
-  late List<siteFilter> activeFilters = [];
+  late List<SiteFilter> activeFilters = [];
   late List<HistSite> searchSites;
 
   @override
@@ -88,7 +89,8 @@ class _ListPageState extends State<ListPage> {
     updateTimer = Timer.periodic(const Duration(milliseconds: 1000), _update);
     displaySites = widget.app_state.historicalSites;
     fullSiteList = widget.app_state.historicalSites;
-    activeFilters.addAll(siteFilter.values);
+    activeFilters.addAll(widget.app_state
+        .siteFilters); //I suspect that this doesn't load quickly enough and that is why active filters starts empty
     searchSites = fullSiteList;
     // print("INIT STATE");
 
@@ -132,10 +134,11 @@ class _ListPageState extends State<ListPage> {
                   height: MediaQuery.of(context).size.height / 9,
                   child: Stack(children: [
                     ListView.builder(
-                      itemCount: siteFilter.values.length,
+                      itemCount: widget.app_state.siteFilters.length,
                       scrollDirection: Axis.horizontal,
                       itemBuilder: (context, index) {
-                        siteFilter currentFilter = siteFilter.values[index];
+                        SiteFilter currentFilter =
+                            widget.app_state.siteFilters[index];
                         return Padding(
                           padding: EdgeInsets.fromLTRB(8, 32, 8, 16),
                           // padding: EdgeInsets.all(8),
@@ -255,6 +258,16 @@ class _ListPageState extends State<ListPage> {
     if (fullSiteList.isEmpty) {
       fullSiteList = widget.app_state.historicalSites;
       displaySites.addAll(fullSiteList);
+      widget.app_state.siteFilters.remove(widget.app_state.siteFilters
+          .firstWhere((test) => test.name.contains("Other")));
+      /*
+        The "other" filter is added so that all the sites marked as other will still be added to the app when it loads. 
+        I am removing it and re-adding it so that the other filter appears last. 
+        This makes sense to me and it really bothers me when the "other" filter shows up first 
+      */
+      widget.app_state.siteFilters.add(SiteFilter(name: "Other"));
+      activeFilters.addAll(widget.app_state.siteFilters);
+
       print("Full Site List: $fullSiteList");
       print("Display Sites: $displaySites");
     }
@@ -272,7 +285,7 @@ class _ListPageState extends State<ListPage> {
     //TODO: set display items so that only items with the filter will appear in display items list
 
     for (HistSite site in displaySites) {
-      for (siteFilter filter in activeFilters) {
+      for (SiteFilter filter in activeFilters) {
         // print("Filter: $filter");
         // print("Site: $site");
         if (site.filters.contains(filter)) {
@@ -288,7 +301,7 @@ class _ListPageState extends State<ListPage> {
     List<HistSite> newDisplaySites = [];
 
     for (HistSite site in searchSites) {
-      for (siteFilter filter in activeFilters) {
+      for (SiteFilter filter in activeFilters) {
         // print("Filter: $filter");
         // print("Site: $site");
         if (site.filters.contains(filter)) {
