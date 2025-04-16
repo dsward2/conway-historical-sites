@@ -258,14 +258,14 @@ class _ListPageState extends State<ListPage> {
     if (fullSiteList.isEmpty) {
       fullSiteList = widget.app_state.historicalSites;
       displaySites.addAll(fullSiteList);
-      widget.app_state.siteFilters.remove(widget.app_state.siteFilters
-          .firstWhere((test) => test.name.contains("Other")));
+      // widget.app_state.siteFilters.remove(widget.app_state.siteFilters
+      //     .firstWhere((test) => test.name.contains("Other")));
       /*
         The "other" filter is added so that all the sites marked as other will still be added to the app when it loads. 
         I am removing it and re-adding it so that the other filter appears last. 
         This makes sense to me and it really bothers me when the "other" filter shows up first 
       */
-      widget.app_state.siteFilters.add(SiteFilter(name: "Other"));
+      // widget.app_state.siteFilters.add(SiteFilter(name: "Other"));
       activeFilters.addAll(widget.app_state.siteFilters);
 
       print("Full Site List: $fullSiteList");

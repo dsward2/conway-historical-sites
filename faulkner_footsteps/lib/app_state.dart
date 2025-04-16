@@ -315,6 +315,11 @@ class ApplicationState extends ChangeNotifier {
           SiteFilter f = new SiteFilter(name: name);
           _siteFilters.add(f);
           print("filter added: $name");
+          // if (!_siteFilters.isEmpty &&
+          //     _siteFilters.contains(siteFilters
+          //         .firstWhere((test) => test.name.contains("Other")))) {
+          //   _siteFilters.add(SiteFilter(name: "Other")); //add other site filter
+          // }
         }
       });
     } catch (e) {
