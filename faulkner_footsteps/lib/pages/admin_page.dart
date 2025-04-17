@@ -40,6 +40,7 @@ class _AdminListPageState extends State<AdminListPage> {
     updateTimer = Timer.periodic(const Duration(milliseconds: 500), _update);
     // acceptableFilters.addAll(siteFilter.values);
     // acceptableFilters.remove(siteFilter.Other);
+    acceptableFilters = widget.app_state.siteFilters;
   }
 
   void _update(Timer timer) {
@@ -228,8 +229,10 @@ class _AdminListPageState extends State<AdminListPage> {
                             side: WidgetStatePropertyAll(BorderSide(
                                 color: Color.fromARGB(255, 72, 52, 52),
                                 width: 2.0)),
-                            shape: WidgetStatePropertyAll(RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(20.0)))),
+                            shape: WidgetStatePropertyAll(
+                                RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(20.0)))),
                         builder: (BuildContext context,
                             MenuController controller, Widget? child) {
                           return ElevatedButton(
@@ -267,8 +270,7 @@ class _AdminListPageState extends State<AdminListPage> {
                                     }
                                   });
                                 },
-                                child:
-                                    Text((filter.toString()).replaceAll("siteFilter.", ""))))
+                                child: Text((filter.name))))
                             .toList()
 
                         // [

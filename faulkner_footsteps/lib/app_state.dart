@@ -56,7 +56,6 @@ class ApplicationState extends ChangeNotifier {
 
         // Load filters
         await loadFilters();
-        _siteFilters.add(SiteFilter(name: "Other")); //add other site filter
 
         // Site Subscription
 
@@ -305,24 +304,30 @@ class ApplicationState extends ChangeNotifier {
 
     try {
       //is this try needed?
-      final documents = await FirebaseFirestore.instance
-          .collection("filters")
-          .snapshots() //is the snapshot needed?
-          .listen((snapshot) async {
-        //is the listen needed?
-        for (final document in snapshot.docs) {
-          String name = document.get("name");
-          SiteFilter f = new SiteFilter(name: name);
-          _siteFilters.add(f);
-          print("filter added: $name");
-          // if (!_siteFilters.isEmpty &&
-          //     _siteFilters.contains(siteFilters
-          //         .firstWhere((test) => test.name.contains("Other")))) {
-          //   _siteFilters.add(SiteFilter(name: "Other")); //add other site filter
-          // }
-        }
-      });
-    } catch (e) {
+      final snapshot =
+          await FirebaseFirestore.instance.collection("filters").get();
+      for (final document in snapshot.docs) {
+        String name = document.get("name");
+        SiteFilter f = new SiteFilter(name: name);
+        _siteFilters.add(f);
+        print("filter added: $name");
+        // if (!_siteFilters.isEmpty &&
+        //     _siteFilters.contains(siteFilters
+        //         .firstWhere((test) => test.name.contains("Other")))) {
+        //   _siteFilters.add(SiteFilter(name: "Other")); //add other site filter
+        // }
+      }
+      if (!_siteFilters.any((f) => f.name == "Other")) {
+        _siteFilters.add(SiteFilter(name: "Other"));
+      }
+    }
+    // SiteFilter other = _siteFilters.elementAt(0);
+    // SiteFilter last = _siteFilters.last;
+
+    // _siteFilters.removeLast();
+    // _siteFilters.add(other);
+    // _siteFilters[0] = last;
+    catch (e) {
       print("Error loading filters: $e");
     }
   }
