@@ -706,6 +706,61 @@ class _AdminListPageState extends State<AdminListPage> {
     );
   }
 
+  Future<void> showAddFilterDialog() {
+    final nameController = TextEditingController();
+
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: const Color.fromARGB(255, 238, 214, 196),
+              title: Text(
+                "Add New Filter",
+                style: GoogleFonts.ultra(
+                    textStyle: const TextStyle(
+                  color: Color.fromARGB(255, 76, 32, 8),
+                )),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                          labelText: "Filter Name",
+                          labelStyle:
+                              TextStyle(color: Color.fromARGB(255, 76, 32, 8))))
+                ],
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel")),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          const Color.fromARGB(255, 218, 186, 130)),
+                  onPressed: () async {
+                    //do stuff
+                    for (SiteFilter filter in widget.app_state.siteFilters) {
+                      if (filter.name == nameController.text) {
+                        print("Filter is already added!");
+                        return;
+                      }
+                    }
+                    widget.app_state.addFilter(nameController.text);
+                    Navigator.pop(context);
+                    setState(() {});
+                  },
+                  child: const Text("Save Filter"),
+                )
+              ],
+            );
+          });
+        });
+  }
+
   Widget _buildAdminContent() {
     return Column(
       children: [
@@ -727,6 +782,18 @@ class _AdminListPageState extends State<AdminListPage> {
             ),
           ),
         ),
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 218, 186, 130),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
+            onPressed: showAddFilterDialog,
+            child: Text(
+              "Add New Filter Type",
+              style: GoogleFonts.ultra(
+                  textStyle:
+                      const TextStyle(color: Color.fromARGB(255, 76, 32, 8))),
+            )),
         Expanded(
           child: ListView.builder(
             itemCount: widget.app_state.historicalSites.length,
