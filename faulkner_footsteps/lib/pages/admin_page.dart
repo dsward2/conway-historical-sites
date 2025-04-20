@@ -14,6 +14,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:swipe_image_gallery/swipe_image_gallery.dart';
 import 'package:uuid/uuid.dart';
 
 class AdminListPage extends StatefulWidget {
@@ -28,6 +29,7 @@ class _AdminListPageState extends State<AdminListPage> {
   late Timer updateTimer;
   int _selectedIndex = 0;
   File? image;
+  List<File>? images;
   final storage = FirebaseStorage.instance;
   final storageRef = FirebaseStorage.instance.ref();
   var uuid = Uuid();
@@ -48,6 +50,22 @@ class _AdminListPageState extends State<AdminListPage> {
     if (widget.app_state.historicalSites.isNotEmpty) {
       updateTimer.cancel();
     }
+  }
+
+  Future pickImages() async {
+    try {
+      final images = await ImagePicker().pickMultiImage();
+      if (images == null) return;
+      List<File> t = [];
+      for (XFile image in images) {
+        t.add(File(image.path));
+      }
+      this.images = t;
+      setState(() {});
+    } on PlatformException catch (e) {
+      print("Failed to pick images: $e: ");
+    }
+    setState(() {});
   }
 
   Future pickImage() async {
@@ -288,7 +306,7 @@ class _AdminListPageState extends State<AdminListPage> {
                             const Color.fromARGB(255, 218, 186, 130),
                       ),
                       onPressed: () async {
-                        await pickImage();
+                        await pickImages();
                         setState(
                             () {}); //idk why, but setState is acting weird here but it works now
                       },
@@ -341,6 +359,18 @@ class _AdminListPageState extends State<AdminListPage> {
                           ? Image.file(image!,
                               width: 160, height: 160, fit: BoxFit.contain)
                           : FlutterLogo()
+                    ],
+                    if (images != null) ...[
+                      SizedBox(
+                        height: 50,
+                        width: 50,
+                        child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: images!.length,
+                            itemBuilder: (context, index) {
+                              return Image.file(images![index]);
+                            }),
+                      )
                     ],
                   ],
                 ),
