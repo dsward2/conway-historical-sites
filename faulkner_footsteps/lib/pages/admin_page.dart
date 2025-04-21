@@ -84,6 +84,54 @@ class _AdminListPageState extends State<AdminListPage> {
     setState(() {});
   }
 
+  Future<List<String>> uploadImages(
+      String folderName, List<String> fileNames) async {
+    print("begun uploading images");
+    //I want to store a reference to each image and return the list of strings
+    final metadata = SettableMetadata(contentType: "image/jpeg");
+    print("made metadata");
+    //change the filename
+    folderName = folderName.replaceAll(' ', '');
+    print("adjusted folder name");
+    List<String> paths = [];
+    List<UploadTask> uploadTasks = [];
+    int count = 0;
+    print("prior to for loop");
+    for (String fileName in fileNames) {
+      var path = "images/$folderName/$fileName.jpg";
+      paths.add(path);
+      print("path added");
+      uploadTasks.add(storageRef.child(path).putFile(images![count]));
+      print("upload task added");
+      uploadTasks[count].snapshotEvents.listen((TaskSnapshot taskSnapshot) {
+        switch (taskSnapshot.state) {
+          case TaskState.running:
+            final progress = 100.0 *
+                (taskSnapshot.bytesTransferred / taskSnapshot.totalBytes);
+            print("Upload is $progress% complete.");
+            break;
+          case TaskState.paused:
+            print("Upload is paused.");
+            break;
+          case TaskState.canceled:
+            print("Upload was canceled");
+            break;
+          case TaskState.error:
+            print("Upload error");
+            break;
+          case TaskState.success:
+            print("Upload success");
+            break;
+        }
+      });
+
+      count += 1;
+      print("count incremented. Count: $count");
+    }
+
+    return paths;
+  }
+
   Future<String> uploadImage(String folderName, String fileName) async {
 // // Create the file metadata
     final metadata = SettableMetadata(contentType: "image/jpeg");
@@ -362,8 +410,9 @@ class _AdminListPageState extends State<AdminListPage> {
                     ],
                     if (images != null) ...[
                       SizedBox(
-                        height: 50,
-                        width: 50,
+                        //todo: replace with media.sizequery?
+                        height: 200,
+                        width: 200,
                         child: ListView.builder(
                             scrollDirection: Axis.horizontal,
                             itemCount: images!.length,
@@ -391,14 +440,24 @@ class _AdminListPageState extends State<AdminListPage> {
                     //I think putting an async here is fine.
                     if (nameController.text.isNotEmpty &&
                         descriptionController.text.isNotEmpty) {
-                      String randomName = uuid.v4();
-                      String path =
-                          await uploadImage(nameController.text, randomName);
+                      List<String> randomNames = [];
+                      int i = 0;
+                      while (i < images!.length) {
+                        randomNames.add(uuid.v4());
+                        print("Random name thing executed");
+                        i += 1;
+                      }
+                      List<String> paths =
+                          await uploadImages(nameController.text, randomNames);
+                      print("Made it past uploading images");
+                      // String randomName = uuid.v4();
+                      // String path =
+                      // await uploadImage(nameController.text, randomName);
                       final newSite = HistSite(
                         name: nameController.text,
                         description: descriptionController.text,
                         blurbs: blurbs,
-                        imageUrls: [path],
+                        imageUrls: paths,
                         avgRating: 0.0,
                         ratingAmount: 0,
                         filters: chosenFilters,
