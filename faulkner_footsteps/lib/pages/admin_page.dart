@@ -33,7 +33,7 @@ class _AdminListPageState extends State<AdminListPage> {
   final storage = FirebaseStorage.instance;
   final storageRef = FirebaseStorage.instance.ref();
   var uuid = Uuid();
-  List<SiteFilter> chosenFilters = [];
+  // List<SiteFilter> chosenFilters = [];
   List<SiteFilter> acceptableFilters = [];
 
   @override
@@ -197,6 +197,8 @@ class _AdminListPageState extends State<AdminListPage> {
     final descriptionController = TextEditingController();
     final latController = TextEditingController(text: "0.0");
     final lngController = TextEditingController(text: "0.0");
+    List<SiteFilter> chosenFilters = [];
+
     List<InfoText> blurbs = [];
 
     return showDialog(
@@ -557,6 +559,8 @@ class _AdminListPageState extends State<AdminListPage> {
     final descriptionController = TextEditingController(text: site.description);
     final latController = TextEditingController(text: site.lat.toString());
     final lngController = TextEditingController(text: site.lng.toString());
+    List<SiteFilter> chosenFilters = site.filters;
+
     List<InfoText> blurbs = List.from(site.blurbs);
 
     return showDialog(
@@ -671,6 +675,66 @@ class _AdminListPageState extends State<AdminListPage> {
                       },
                       child: const Text('Add Blurb'),
                     ),
+                    MenuAnchor(
+                        style: MenuStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                                const Color.fromARGB(255, 238, 214, 196)),
+                            side: WidgetStatePropertyAll(BorderSide(
+                                color: Color.fromARGB(255, 72, 52, 52),
+                                width: 2.0)),
+                            shape: WidgetStatePropertyAll(
+                                RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(20.0)))),
+                        builder: (BuildContext context,
+                            MenuController controller, Widget? child) {
+                          return ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromARGB(255, 218, 186, 130),
+                              ),
+                              // focusNode: _buttonFocusNode,
+                              onPressed: () {
+                                if (controller.isOpen) {
+                                  controller.close();
+                                } else {
+                                  controller.open();
+                                }
+                              },
+                              child: const Text("Add Filters"));
+                        },
+                        menuChildren: acceptableFilters
+                            .map((filter) => CheckboxMenuButton(
+                                style: ButtonStyle(
+                                    textStyle: WidgetStatePropertyAll(TextStyle(
+                                        color: Color.fromARGB(255, 72, 52, 52),
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold))),
+                                closeOnActivate: false,
+                                value: chosenFilters.contains(filter),
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (!chosenFilters.contains(filter)) {
+                                      chosenFilters.add(filter);
+                                      print(chosenFilters);
+                                    } else {
+                                      chosenFilters.remove(filter);
+                                      print(chosenFilters);
+                                    }
+                                  });
+                                },
+                                child: Text((filter.name))))
+                            .toList()
+
+                        // [
+                        //   CheckboxMenuButton(
+                        //       value: false,
+                        //       onChanged: (bool? value) {
+                        //         print("changed");
+                        //       },
+                        //       child: const Text("Message"))
+                        // ]
+                        ),
                   ],
                 ),
               ),
@@ -697,7 +761,7 @@ class _AdminListPageState extends State<AdminListPage> {
                       imageUrls: site.imageUrls,
                       avgRating: site.avgRating,
                       ratingAmount: site.ratingAmount,
-                      filters: [],
+                      filters: chosenFilters,
                       lat: double.tryParse(latController.text) ?? site.lat,
                       lng: double.tryParse(lngController.text) ?? site.lng,
                     );
