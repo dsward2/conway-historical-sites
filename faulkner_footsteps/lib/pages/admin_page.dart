@@ -805,6 +805,7 @@ class _AdminListPageState extends State<AdminListPage> {
 
   Future<void> _showEditSiteImagesDialog(List<Uint8List?> siteImages) {
     List<Uint8List> listOfSelectedImages = [];
+    List<Uint8List> markedForRemoval = [];
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -862,6 +863,16 @@ class _AdminListPageState extends State<AdminListPage> {
                             backgroundColor:
                                 const Color.fromARGB(255, 218, 186, 130)),
                         onPressed: () {
+                          for (Uint8List? item in listOfSelectedImages) {
+                            if (item != null) {
+                              markedForRemoval.add(item);
+                            }
+                          }
+                          setState(() {
+                            siteImages.removeWhere(
+                                (test) => markedForRemoval.contains(test));
+                          });
+                          markedForRemoval.clear();
                           print("Delete Images button is pressed");
                         },
                         child: const Text("Delete Images")),
