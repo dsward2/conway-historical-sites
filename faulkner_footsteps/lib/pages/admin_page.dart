@@ -735,6 +735,16 @@ class _AdminListPageState extends State<AdminListPage> {
                         //       child: const Text("Message"))
                         // ]
                         ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color.fromARGB(255, 218, 186, 130),
+                      ),
+                      onPressed: () {
+                        _showEditSiteImagesDialog(site.images);
+                      },
+                      child: const Text('Edit Images'),
+                    ),
                   ],
                 ),
               ),
@@ -787,6 +797,99 @@ class _AdminListPageState extends State<AdminListPage> {
         );
       },
     );
+  }
+
+  Future<void> _showEditSiteImagesDialog(List<Uint8List?> siteImages) {
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            actionsAlignment: MainAxisAlignment.spaceBetween,
+            actionsOverflowAlignment: OverflowBarAlignment.center,
+            actionsOverflowDirection: VerticalDirection.down,
+            backgroundColor: const Color.fromARGB(255, 238, 214, 196),
+            title: Text(
+              "Edit Images",
+              style: GoogleFonts.ultra(
+                  textStyle:
+                      const TextStyle(color: Color.fromARGB(255, 76, 32, 8))),
+            ),
+            content: Column(children: [
+              Text("hey sup fam"),
+              SizedBox(
+                height: 200,
+                width: 200,
+                child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: siteImages!.length,
+                    itemBuilder: (BuildContext context, int index) {
+                      return Row(
+                        children: [
+                          //Image
+                          Image.memory(siteImages[index]!,
+                              width: 160, height: 160, fit: BoxFit.contain),
+                          Checkbox(
+                              value: false,
+                              onChanged: (bool? value) {
+                                print("Image checkbox checked!!");
+                              })
+                          //Checkbox?
+                        ],
+                      );
+                    }),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              const Color.fromARGB(255, 218, 186, 130)),
+                      onPressed: () {
+                        print("Delete Images button is pressed");
+                      },
+                      child: const Text("Delete Images")),
+                  ElevatedButton(
+                      onPressed: () async {
+                        await pickImages();
+                        setState(() {});
+                      },
+                      child: const Text("Add Images")),
+                ],
+              )
+            ]),
+
+            // ListView.builder(
+            //     scrollDirection: Axis.vertical,
+            //     itemCount: images!.length,
+            //     itemBuilder: (BuildContext context, int index) {
+            //       return Row(
+            //         children: [
+            //           //Image
+            //           Image.file(images[index],
+            //               width: 160, height: 160, fit: BoxFit.contain),
+            //           Checkbox(
+            //               value: false,
+            //               onChanged: (bool? value) {
+            //                 print("Image checkbox checked!!");
+            //               })
+            //           //Checkbox?
+            //         ],
+            //       );
+            //     }),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                  onPressed: () {
+                    UnimplementedError;
+                  },
+                  child: const Text("Submit Changes"))
+            ],
+          );
+        });
   }
 
   Future<void> _showEditBlurbDialog(List<InfoText> blurbs, int index) async {
