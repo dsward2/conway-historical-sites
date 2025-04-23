@@ -142,10 +142,6 @@ class _HistSitePage extends State<HistSitePage> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      //TODO: fix the scaffold disappearing. The best Idea that I have is to just
-                                      // return a scaffold with a MapDisplay as its body...
-                                      // Not a wonderful solution, but the first that comes to mind
-                                      //
                                       builder: (context) => Scaffold(
                                             backgroundColor:
                                                 const Color.fromARGB(

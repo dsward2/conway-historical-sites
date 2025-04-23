@@ -55,7 +55,11 @@ class _AdminListPageState extends State<AdminListPage> {
   Future pickImages() async {
     try {
       final images = await ImagePicker().pickMultiImage();
-      if (images == null) return;
+      if (images == null) {
+        print("This is null!");
+        return;
+      }
+      ;
       List<File> t = [];
       for (XFile image in images) {
         t.add(File(image.path));
@@ -800,95 +804,120 @@ class _AdminListPageState extends State<AdminListPage> {
   }
 
   Future<void> _showEditSiteImagesDialog(List<Uint8List?> siteImages) {
+    List<Uint8List> listOfSelectedImages = [];
     return showDialog(
         context: context,
         builder: (BuildContext context) {
-          return AlertDialog(
-            actionsAlignment: MainAxisAlignment.spaceBetween,
-            actionsOverflowAlignment: OverflowBarAlignment.center,
-            actionsOverflowDirection: VerticalDirection.down,
-            backgroundColor: const Color.fromARGB(255, 238, 214, 196),
-            title: Text(
-              "Edit Images",
-              style: GoogleFonts.ultra(
-                  textStyle:
-                      const TextStyle(color: Color.fromARGB(255, 76, 32, 8))),
-            ),
-            content: Column(children: [
-              Text("hey sup fam"),
-              SizedBox(
-                height: 200,
-                width: 200,
-                child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: siteImages!.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      return Row(
-                        children: [
-                          //Image
-                          Image.memory(siteImages[index]!,
-                              width: 160, height: 160, fit: BoxFit.contain),
-                          Checkbox(
-                              value: false,
-                              onChanged: (bool? value) {
-                                print("Image checkbox checked!!");
-                              })
-                          //Checkbox?
-                        ],
-                      );
-                    }),
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              actionsAlignment: MainAxisAlignment.spaceBetween,
+              actionsOverflowAlignment: OverflowBarAlignment.center,
+              actionsOverflowDirection: VerticalDirection.down,
+              backgroundColor: const Color.fromARGB(255, 238, 214, 196),
+              title: Text(
+                "Edit Images",
+                style: GoogleFonts.ultra(
+                    textStyle:
+                        const TextStyle(color: Color.fromARGB(255, 76, 32, 8))),
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor:
-                              const Color.fromARGB(255, 218, 186, 130)),
-                      onPressed: () {
-                        print("Delete Images button is pressed");
-                      },
-                      child: const Text("Delete Images")),
-                  ElevatedButton(
-                      onPressed: () async {
-                        await pickImages();
-                        setState(() {});
-                      },
-                      child: const Text("Add Images")),
-                ],
-              )
-            ]),
+              content: Column(children: [
+                Text("hey sup fam"),
+                SizedBox(
+                  height: 400,
+                  width: 300,
+                  child: ListView.builder(
+                      scrollDirection: Axis.vertical,
+                      itemCount: siteImages.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return Row(
+                          children: [
+                            //Image
+                            Image.memory(siteImages[index]!,
+                                width: 160, height: 160, fit: BoxFit.contain),
+                            Checkbox(
+                                value: listOfSelectedImages
+                                    .contains(siteImages[index]),
+                                onChanged: (bool? value) {
+                                  print("Image checkbox checked!!");
+                                  setState(() {
+                                    if (!value!) {
+                                      listOfSelectedImages
+                                          .remove(siteImages[index]);
+                                    } else {
+                                      listOfSelectedImages
+                                          .add(siteImages[index]!);
+                                    }
+                                  });
+                                })
+                            //Checkbox?
+                          ],
+                        );
+                      }),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color.fromARGB(255, 218, 186, 130)),
+                        onPressed: () {
+                          print("Delete Images button is pressed");
+                        },
+                        child: const Text("Delete Images")),
+                    ElevatedButton(
+                        onPressed: () async {
+                          List<File> newImages = [];
+                          await pickImages();
+                          if (images != null) {
+                            newImages = images!;
+                          }
+                          List<Uint8List> newInt8List = [];
 
-            // ListView.builder(
-            //     scrollDirection: Axis.vertical,
-            //     itemCount: images!.length,
-            //     itemBuilder: (BuildContext context, int index) {
-            //       return Row(
-            //         children: [
-            //           //Image
-            //           Image.file(images[index],
-            //               width: 160, height: 160, fit: BoxFit.contain),
-            //           Checkbox(
-            //               value: false,
-            //               onChanged: (bool? value) {
-            //                 print("Image checkbox checked!!");
-            //               })
-            //           //Checkbox?
-            //         ],
-            //       );
-            //     }),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                  onPressed: () {
-                    UnimplementedError;
-                  },
-                  child: const Text("Submit Changes"))
-            ],
-          );
+                          // turn file images into UInt8List
+                          for (File i in newImages) {
+                            Uint8List newFile = await i.readAsBytes();
+                            newInt8List.add(newFile);
+                          }
+                          siteImages.addAll(newInt8List);
+                          setState(() {});
+                        },
+                        child: const Text("Add Images")),
+                  ],
+                )
+              ]),
+
+              // ListView.builder(
+              //     scrollDirection: Axis.vertical,
+              //     itemCount: images!.length,
+              //     itemBuilder: (BuildContext context, int index) {
+              //       return Row(
+              //         children: [
+              //           //Image
+              //           Image.file(images[index],
+              //               width: 160, height: 160, fit: BoxFit.contain),
+              //           Checkbox(
+              //               value: false,
+              //               onChanged: (bool? value) {
+              //                 print("Image checkbox checked!!");
+              //               })
+              //           //Checkbox?
+              //         ],
+              //       );
+              //     }),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                    onPressed: () {
+                      UnimplementedError;
+                    },
+                    child: const Text("Submit Changes"))
+              ],
+            );
+          });
         });
   }
 
