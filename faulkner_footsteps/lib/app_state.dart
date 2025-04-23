@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:faulkner_footsteps/dialogs/filter_Dialog.dart';
 import 'package:faulkner_footsteps/objects/hist_site.dart';
 import 'package:faulkner_footsteps/objects/info_text.dart';
+import 'package:faulkner_footsteps/objects/site_filter.dart';
 import 'package:faulkner_footsteps/pages/login_page.dart';
 import 'package:firebase_auth/firebase_auth.dart'
     hide EmailAuthProvider, PhoneAuthProvider;
@@ -32,6 +33,9 @@ class ApplicationState extends ChangeNotifier {
   List<HistSite> _historicalSites = [];
   List<HistSite> get historicalSites => _historicalSites;
 
+  List<SiteFilter> _siteFilters = [];
+  List<SiteFilter> get siteFilters => _siteFilters;
+
   Future<void> init() async {
     await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform);
@@ -50,6 +54,11 @@ class ApplicationState extends ChangeNotifier {
         // Load achievements when user logs in
         await loadAchievements();
 
+        // Load filters
+        await loadFilters();
+
+        // Site Subscription
+
         _siteSubscription = FirebaseFirestore.instance
             .collection('sites')
             .snapshots()
@@ -64,26 +73,16 @@ class ApplicationState extends ChangeNotifier {
               newBlurbs.add(InfoText(
                   title: values[0], value: values[1], date: values[2]));
             }
-            //convert firebase filters to siteFilters
-            //TODO: ensure that all sitefilters have a if statement here
 
-            List<siteFilter> filters = [];
-            // print("reached!");
+            List<SiteFilter> filters = [];
+
             for (String filter
                 in List<String>.from(document.data()["filters"])) {
-              // print("Filter: $filter");
-              if (filter.toLowerCase() == "monument")
-                filters.add(siteFilter.Monument);
-              else if (filter.toLowerCase() == "park") {
-                filters.add(siteFilter.Park);
-              } else if (filter.toLowerCase() == "hall") {
-                filters.add(siteFilter.Hall);
-              } else if (filter.toLowerCase() == "other") {
-                filters.add(siteFilter.Other);
-              } else {
-                print(
-                    "Filter not found in siteFilter enum list. Filter: $filter");
-              }
+              filters.add(_siteFilters.firstWhere((element) {
+                print("STRING NAME: $filter");
+                print("TEST FILTER NAME: ${element.name}");
+                return element.name == filter;
+              }));
             }
             HistSite site = HistSite(
               name: document.data()["name"] as String,
@@ -181,19 +180,11 @@ class ApplicationState extends ChangeNotifier {
     // }
 
     // we need to convert all the filters to strings so they are firestore friendly
+
     List<String> firebaseFriendlyFilterList = [];
 
-    for (siteFilter filter in newSite.filters) {
-      if (filter == siteFilter.Hall) {
-        firebaseFriendlyFilterList.add("Hall");
-      } else if (filter == siteFilter.Monument) {
-        firebaseFriendlyFilterList.add("Monument");
-      } else if (filter == siteFilter.Park) {
-        firebaseFriendlyFilterList.add("Park");
-      } else if (filter == siteFilter.Other) {
-        firebaseFriendlyFilterList.add("Other");
-      }
-      //TODO: add all other filter types as they are added...
+    for (SiteFilter filter in newSite.filters) {
+      firebaseFriendlyFilterList.add(filter.name);
     }
 
     var data = {
@@ -325,6 +316,43 @@ class ApplicationState extends ChangeNotifier {
       }
     } catch (e) {
       print('Error loading achievements: $e');
+    }
+  }
+
+  //new stuff TODO: answer comments. do some research on this
+  Future<void> loadFilters() async {
+    if (!_loggedIn) return;
+
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
+    try {
+      //is this try needed?
+      final snapshot =
+          await FirebaseFirestore.instance.collection("filters").get();
+      for (final document in snapshot.docs) {
+        String name = document.get("name");
+        SiteFilter f = new SiteFilter(name: name);
+        _siteFilters.add(f);
+        print("filter added: $name");
+        // if (!_siteFilters.isEmpty &&
+        //     _siteFilters.contains(siteFilters
+        //         .firstWhere((test) => test.name.contains("Other")))) {
+        //   _siteFilters.add(SiteFilter(name: "Other")); //add other site filter
+        // }
+      }
+      if (!_siteFilters.any((f) => f.name == "Other")) {
+        _siteFilters.add(SiteFilter(name: "Other"));
+      }
+    }
+    // SiteFilter other = _siteFilters.elementAt(0);
+    // SiteFilter last = _siteFilters.last;
+
+    // _siteFilters.removeLast();
+    // _siteFilters.add(other);
+    // _siteFilters[0] = last;
+    catch (e) {
+      print("Error loading filters: $e");
     }
   }
 
