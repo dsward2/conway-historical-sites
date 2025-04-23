@@ -1,4 +1,5 @@
 import 'package:faulkner_footsteps/app_router.dart';
+import 'package:faulkner_footsteps/pages/achievement.dart';
 import 'package:faulkner_footsteps/pages/admin_page.dart';
 import 'package:faulkner_footsteps/pages/login_page.dart';
 import 'package:flutter/material.dart';
@@ -69,6 +70,19 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     }
+  }
+
+  void _navigateToAchievementsPage() {
+    // Navigate to achievements page with the app state's historical sites
+    final appState = Provider.of<ApplicationState>(context, listen: false);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AchievementsPage(
+          displaySites: appState.historicalSites,
+        ),
+      ),
+    );
   }
 
   @override
@@ -221,14 +235,46 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'My Achievements',
-                        style: GoogleFonts.ultra(
-                          textStyle: const TextStyle(
-                            color: Color.fromARGB(255, 72, 52, 52),
-                            fontSize: 16,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'My Achievements',
+                            style: GoogleFonts.ultra(
+                              textStyle: const TextStyle(
+                                color: Color.fromARGB(255, 72, 52, 52),
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
-                        ),
+                          // New achievement button
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: Color.fromARGB(255, 107, 79, 79),
+                              borderRadius: BorderRadius.circular(8.0),
+                              border: Border.all(
+                                color: Color.fromARGB(255, 255, 243, 228),
+                                width: 2.0,
+                              ),
+                            ),
+                            child: Material(
+                              color: Colors.transparent,
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(8.0),
+                                onTap: _navigateToAchievementsPage,
+                                child: Center(
+                                  child: Icon(
+                                    Icons.emoji_events,
+                                    color: Color.fromARGB(255, 255, 243, 228),
+                                    size: 24,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       Consumer<ApplicationState>(

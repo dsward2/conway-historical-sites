@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:faulkner_footsteps/app_state.dart';
 import 'package:faulkner_footsteps/dialogs/filter_Dialog.dart';
 import 'package:faulkner_footsteps/objects/hist_site.dart';
-import 'package:faulkner_footsteps/pages/achievement.dart';
 import 'package:faulkner_footsteps/pages/map_display.dart';
 import 'package:faulkner_footsteps/widgets/logout_button.dart';
 import 'package:faulkner_footsteps/widgets/profile_button.dart';
@@ -62,13 +61,6 @@ class _ListPageState extends State<ListPage> {
       print("update loop");
     }
   }
-  //not sure if this code is important, I will leave it in for now
-  // Future<void> showRatingDialog() async {
-  //   await showDialog<double>(
-  //     context: context,
-  //     builder: (BuildContext context) => RatingDialog(widget.app_state, ),
-  //   );
-  // }
 
   late Timer updateTimer;
   late List<HistSite> fullSiteList;
@@ -95,7 +87,6 @@ class _ListPageState extends State<ListPage> {
       siteFilter.Other
     ];
     searchSites = fullSiteList;
-    // print("INIT STATE");
 
     _searchController = SearchController();
     super.initState();
@@ -223,9 +214,6 @@ class _ListPageState extends State<ListPage> {
     );
   }
 
-  //So funny enough, I don't think this is necessary.
-  // I changed the way the site list forms, so i think once you sort them once they are always sorted.
-  // Whoops, i guess we have this if we need it.
   void sortDisplayItems() {
     List<HistSite> lst = [];
     siteLocations = widget.app_state.getLocations();
@@ -234,7 +222,6 @@ class _ListPageState extends State<ListPage> {
       ..sort((e1, e2) => e1.value.compareTo(e2.value)));
     int i = 0;
     while (i < sorted.keys.length) {
-      //TODO: issue with contains. It is looking for a string, not a HistSite!!!
       for (HistSite site in displaySites) {
         if (site.name == sorted.keys.elementAt(i)) {
           lst.add(site);
@@ -242,10 +229,6 @@ class _ListPageState extends State<ListPage> {
           print("sorted name: ${sorted.keys.elementAt(i)}");
         }
       }
-
-      // displaySites.add(fullSiteList.firstWhere((x) {
-      //   return x.name == sorted.keys.elementAt(i);
-      // }));
       i++;
     }
     print("Lst: $lst");
@@ -265,9 +248,6 @@ class _ListPageState extends State<ListPage> {
     }
     searchSites = fullSiteList;
     sortDisplayItems();
-
-    // print("Sorted: $sorted");
-    // print("Display List: $displaySites");
   }
 
   void filterChangedCallback() {
@@ -446,9 +426,7 @@ class _ListPageState extends State<ListPage> {
               child: Text(
                 _selectedIndex == 0
                     ? "Historical Sites"
-                    : _selectedIndex == 1
-                        ? "Map                    "
-                        : "Achievements",
+                    : "Map                    ",
                 style: GoogleFonts.ultra(
                     textStyle: const TextStyle(
                         color: Color.fromARGB(255, 255, 243, 228)),
@@ -458,15 +436,11 @@ class _ListPageState extends State<ListPage> {
           )),
       body: _selectedIndex == 0
           ? _buildHomeContent()
-          : _selectedIndex == 1
-              ? MapDisplay(
-                  currentPosition: _currentPosition!,
-                  initialPosition: _currentPosition!,
-                  appState: widget.app_state,
-                )
-              : AchievementsPage(
-                  displaySites: displaySites,
-                ),
+          : MapDisplay(
+              currentPosition: _currentPosition!,
+              initialPosition: _currentPosition!,
+              appState: widget.app_state,
+            ),
       bottomNavigationBar: BottomNavigationBar(
         backgroundColor: const Color.fromARGB(255, 107, 79, 79),
         selectedItemColor: const Color.fromARGB(255, 238, 214, 196),
@@ -480,25 +454,10 @@ class _ListPageState extends State<ListPage> {
             icon: Icon(Icons.map),
             label: 'Map',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.emoji_events),
-            label: 'Achievements',
-          ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
-
-      // Uncomment to add sites
-      /*
-      floatingActionButton: FloatingActionButton(onPressed: () {
-        showDialog(
-            context: context,
-            builder: (_) {
-              return SiteDialogue(siteAdded: widget.app_state.addSite);
-            });
-      }),
-      */
     );
   }
 }
