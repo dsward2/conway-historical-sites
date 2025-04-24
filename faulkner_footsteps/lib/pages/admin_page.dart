@@ -564,6 +564,8 @@ class _AdminListPageState extends State<AdminListPage> {
     final latController = TextEditingController(text: site.lat.toString());
     final lngController = TextEditingController(text: site.lng.toString());
     List<SiteFilter> chosenFilters = site.filters;
+    List<Uint8List?> copyOfOriginalImageList = [];
+    copyOfOriginalImageList.addAll(site.images);
 
     List<InfoText> blurbs = List.from(site.blurbs);
 
@@ -763,37 +765,64 @@ class _AdminListPageState extends State<AdminListPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 218, 186, 130),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     // Get the original site name for updating or deleting the document
                     final originalName = site.name;
                     final oldDocRef = FirebaseFirestore.instance
                         .collection('sites')
                         .doc(originalName);
 
-                    final updatedSite = HistSite(
-                      name: nameController.text,
-                      description: descriptionController.text,
-                      blurbs: blurbs,
-                      imageUrls: site.imageUrls,
-                      avgRating: site.avgRating,
-                      ratingAmount: site.ratingAmount,
-                      filters: chosenFilters,
-                      lat: double.tryParse(latController.text) ?? site.lat,
-                      lng: double.tryParse(lngController.text) ?? site.lng,
-                    );
+                    // upload the new images
 
-                    // If name changed, delete old document and create new one
-                    if (originalName != nameController.text) {
-                      oldDocRef.delete().then((_) {
+                    if (nameController.text.isNotEmpty &&
+                        descriptionController.text.isNotEmpty) {
+                      if (site.images != copyOfOriginalImageList) {
+                        // delete the old images
+
+                        print("images are not the same!");
+                        List<String> randomNames = [];
+                        int i = 0;
+                        while (i < images!.length) {
+                          randomNames.add(uuid.v4());
+                          print("Random name thing executed");
+                          i += 1;
+                        }
+                        List<String> paths = await uploadImages(
+                            nameController.text, randomNames);
+                        print("Made it past uploading images");
+                      }
+
+                      // add "other" if chosenFilters is empty
+
+                      if (chosenFilters.isEmpty) {
+                        chosenFilters.add(SiteFilter(name: "Other"));
+                      }
+
+                      final updatedSite = HistSite(
+                        name: nameController.text,
+                        description: descriptionController.text,
+                        blurbs: blurbs,
+                        imageUrls: site.imageUrls,
+                        avgRating: site.avgRating,
+                        ratingAmount: site.ratingAmount,
+                        filters: chosenFilters,
+                        lat: double.tryParse(latController.text) ?? site.lat,
+                        lng: double.tryParse(lngController.text) ?? site.lng,
+                      );
+
+                      // If name changed, delete old document and create new one
+                      if (originalName != nameController.text) {
+                        oldDocRef.delete().then((_) {
+                          widget.app_state.addSite(updatedSite);
+                        });
+                      } else {
+                        // Just update existing document
                         widget.app_state.addSite(updatedSite);
-                      });
-                    } else {
-                      // Just update existing document
-                      widget.app_state.addSite(updatedSite);
-                    }
+                      }
 
-                    Navigator.pop(context);
-                    setState(() {});
+                      Navigator.pop(context);
+                      setState(() {});
+                    }
                   },
                   child: const Text('Save Changes'),
                 ),
