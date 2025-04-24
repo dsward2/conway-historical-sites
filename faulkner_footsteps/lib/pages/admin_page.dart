@@ -746,6 +746,8 @@ class _AdminListPageState extends State<AdminListPage> {
                       ),
                       onPressed: () {
                         _showEditSiteImagesDialog(site.images);
+                        print("Reached post dialog opening");
+                        print("Length p: ${site.images.length}");
                       },
                       child: const Text('Edit Images'),
                     ),
@@ -806,6 +808,8 @@ class _AdminListPageState extends State<AdminListPage> {
   Future<void> _showEditSiteImagesDialog(List<Uint8List?> siteImages) {
     List<Uint8List> listOfSelectedImages = [];
     List<Uint8List> markedForRemoval = [];
+    List<Uint8List?> copyOfOriginalList = [];
+    copyOfOriginalList.addAll(siteImages);
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -897,33 +901,26 @@ class _AdminListPageState extends State<AdminListPage> {
                   ],
                 )
               ]),
-
-              // ListView.builder(
-              //     scrollDirection: Axis.vertical,
-              //     itemCount: images!.length,
-              //     itemBuilder: (BuildContext context, int index) {
-              //       return Row(
-              //         children: [
-              //           //Image
-              //           Image.file(images[index],
-              //               width: 160, height: 160, fit: BoxFit.contain),
-              //           Checkbox(
-              //               value: false,
-              //               onChanged: (bool? value) {
-              //                 print("Image checkbox checked!!");
-              //               })
-              //           //Checkbox?
-              //         ],
-              //       );
-              //     }),
               actions: [
                 TextButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    setState(() {
+                      siteImages.clear();
+                      siteImages.addAll(copyOfOriginalList); //reset the list
+                    });
+                    print("Length: ${siteImages.length}");
+                    Navigator.pop(context);
+                  },
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
                     onPressed: () {
-                      UnimplementedError;
+                      Navigator.pop(context);
+                      // TODO: I think I need to delete the original references. I don't know if it should be here or what?
+                      /*
+                        I can probably just delete the whole folder of the original site's name 
+                        and then I can re-use my upload images function
+                      */
                     },
                     child: const Text("Submit Changes"))
               ],
