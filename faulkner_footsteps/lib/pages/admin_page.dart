@@ -774,20 +774,22 @@ class _AdminListPageState extends State<AdminListPage> {
 
                     // upload the new images
 
+                    List<String> paths = [];
                     if (nameController.text.isNotEmpty &&
                         descriptionController.text.isNotEmpty) {
                       if (site.images != copyOfOriginalImageList) {
                         // delete the old images
-
+                        storageRef.child("$originalName").delete();
+                        // upload the new images
                         print("images are not the same!");
                         List<String> randomNames = [];
                         int i = 0;
-                        while (i < images!.length) {
+                        while (i < site.images.length) {
                           randomNames.add(uuid.v4());
                           print("Random name thing executed");
                           i += 1;
                         }
-                        List<String> paths = await uploadImages(
+                        paths = await uploadImages(
                             nameController.text, randomNames);
                         print("Made it past uploading images");
                       }
@@ -802,7 +804,9 @@ class _AdminListPageState extends State<AdminListPage> {
                         name: nameController.text,
                         description: descriptionController.text,
                         blurbs: blurbs,
-                        imageUrls: site.imageUrls,
+                        imageUrls: site.images == copyOfOriginalImageList
+                            ? site.imageUrls
+                            : paths,
                         avgRating: site.avgRating,
                         ratingAmount: site.ratingAmount,
                         filters: chosenFilters,
