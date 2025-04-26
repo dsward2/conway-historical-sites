@@ -848,7 +848,7 @@ class _AdminListPageState extends State<AdminListPage> {
         builder: (BuildContext context) {
           return StatefulBuilder(builder: (context, setState) {
             return AlertDialog(
-              actionsAlignment: MainAxisAlignment.spaceBetween,
+              // actionsAlignment: MainAxisAlignment.spaceBetween,
               actionsOverflowAlignment: OverflowBarAlignment.center,
               actionsOverflowDirection: VerticalDirection.down,
               backgroundColor: const Color.fromARGB(255, 238, 214, 196),
@@ -859,41 +859,53 @@ class _AdminListPageState extends State<AdminListPage> {
                         const TextStyle(color: Color.fromARGB(255, 76, 32, 8))),
               ),
               content: Column(children: [
-                Text("hey sup fam"),
                 SizedBox(
-                  height: 400,
-                  width: 300,
-                  child: ListView.builder(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  width: MediaQuery.of(context).size.width * 0.75,
+                  child: ReorderableListView.builder(
+                      buildDefaultDragHandles: false,
                       scrollDirection: Axis.vertical,
                       itemCount: siteImages.length,
+                      onReorder: (int oldIndex, int newIndex) {
+                        setState(() {
+                          if (oldIndex < newIndex) {
+                            newIndex -= 1;
+                          }
+                          final Uint8List? item = siteImages.removeAt(oldIndex);
+                          siteImages.insert(newIndex, item);
+                        });
+                      },
                       itemBuilder: (BuildContext context, int index) {
-                        return Row(
-                          children: [
-                            //Image
-                            Image.memory(siteImages[index]!,
-                                width: 160, height: 160, fit: BoxFit.contain),
-                            Checkbox(
-                                value: listOfSelectedImages
-                                    .contains(siteImages[index]),
-                                onChanged: (bool? value) {
-                                  print("Image checkbox checked!!");
-                                  setState(() {
-                                    if (!value!) {
-                                      listOfSelectedImages
-                                          .remove(siteImages[index]);
-                                    } else {
-                                      listOfSelectedImages
-                                          .add(siteImages[index]!);
-                                    }
-                                  });
-                                })
-                            //Checkbox?
-                          ],
+                        return ListTile(
+                          key: Key('$index'),
+                          leading: Checkbox(
+                              activeColor:
+                                  const Color.fromARGB(255, 107, 79, 79),
+                              value: listOfSelectedImages
+                                  .contains(siteImages[index]),
+                              onChanged: (bool? value) {
+                                print("Image checkbox checked!!");
+                                setState(() {
+                                  if (!value!) {
+                                    listOfSelectedImages
+                                        .remove(siteImages[index]);
+                                  } else {
+                                    listOfSelectedImages
+                                        .add(siteImages[index]!);
+                                  }
+                                });
+                              }),
+                          title: Image.memory(siteImages[index]!,
+                              width: 160, height: 160, fit: BoxFit.contain),
+                          trailing: ReorderableDragStartListener(
+                              index: siteImages.indexOf(siteImages[index]),
+                              child: Icon(Icons.drag_handle)),
                         );
                       }),
                 ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     ElevatedButton(
                         style: ElevatedButton.styleFrom(
@@ -914,6 +926,9 @@ class _AdminListPageState extends State<AdminListPage> {
                         },
                         child: const Text("Delete Images")),
                     ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color.fromARGB(255, 218, 186, 130)),
                         onPressed: () async {
                           List<File> newImages = [];
                           await pickImages();
@@ -947,6 +962,9 @@ class _AdminListPageState extends State<AdminListPage> {
                   child: const Text('Cancel'),
                 ),
                 ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color.fromARGB(255, 218, 186, 130)),
                     onPressed: () {
                       Navigator.pop(context);
                       // TODO: I think I need to delete the original references. I don't know if it should be here or what?
