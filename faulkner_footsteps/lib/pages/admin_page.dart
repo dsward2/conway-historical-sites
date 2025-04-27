@@ -770,6 +770,7 @@ class _AdminListPageState extends State<AdminListPage> {
                     backgroundColor: const Color.fromARGB(255, 218, 186, 130),
                   ),
                   onPressed: () async {
+                    print("pressed submit!");
                     // Get the original site name for updating or deleting the document
                     final originalName = site.name;
                     final oldDocRef = FirebaseFirestore.instance
@@ -783,18 +784,45 @@ class _AdminListPageState extends State<AdminListPage> {
                         descriptionController.text.isNotEmpty) {
                       if (site.images != copyOfOriginalImageList) {
                         // delete the old images
-                        storageRef.child("$originalName").delete();
+                        final refName = originalName.replaceAll(' ', '');
+                        print("Deleting ${refName}");
+                        final path = "images/$refName";
+
+                        // storageRef.child("$path").delete();
                         // upload the new images
                         print("images are not the same!");
                         List<String> randomNames = [];
                         int i = 0;
-                        while (i < site.images.length) {
+                        print("site images length : ${site.images.length}");
+                        print("images length: ${images!.length}");
+                        while (i < images!.length) {
                           randomNames.add(uuid.v4());
                           print("Random name thing executed");
                           i += 1;
                         }
-                        paths = await uploadImages(
-                            nameController.text, randomNames);
+                        // this will make the images into files so the images list can have them
+                        /*
+                            I suspect that the issue lies here. I am trying to re upload all the files
+                            within site.images. The issue is that they are in a Uint8list format. 
+                            It appears to work okay (it doesn't throw errors) but when I try to upload them, 
+                            it says they don't exist. When I try to view the images in the images list, my terminal
+                            starts speaking in tongues. 
+
+                            Solution Ideas: 
+                            I previously wanted to delete all files, then reupload them to the storage
+                            If I cannot reupload previously uploaded files (they are currently uint8list)
+                            then I need to only reupload the files I just added. 
+
+                            If a previously uploaded file is no longer withing the list, i need to delete it
+
+
+
+                            Current state: 
+                            The paths are replaced by only the new items
+                          */
+
+                        print("Images length: ${images!.length}");
+                        paths = await uploadImages(refName, randomNames);
                         print("Made it past uploading images");
                       }
 
@@ -1063,6 +1091,7 @@ class _AdminListPageState extends State<AdminListPage> {
                 backgroundColor: const Color.fromARGB(255, 218, 186, 130),
               ),
               onPressed: () {
+                print("pressed save changes");
                 blurbs[index] = InfoText(
                   title: titleController.text,
                   value: valueController.text,
