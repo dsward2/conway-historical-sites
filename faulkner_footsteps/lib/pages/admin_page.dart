@@ -777,23 +777,22 @@ class _AdminListPageState extends State<AdminListPage> {
                         .collection('sites')
                         .doc(originalName);
 
-                    // upload the new images
-
+                    // Get list of all the current paths
                     List<String> paths = [];
+                    paths.addAll(site.imageUrls);
+
                     if (nameController.text.isNotEmpty &&
                         descriptionController.text.isNotEmpty) {
                       if (site.images != copyOfOriginalImageList) {
-                        // delete the old images
-                        final refName = originalName.replaceAll(' ', '');
-                        print("Deleting ${refName}");
-                        final path = "images/$refName";
+                        // // delete the old images
+                        // print("Deleting ${refName}");
+                        // final path = "images/$refName";
 
                         // storageRef.child("$path").delete();
-                        // upload the new images
-                        print("images are not the same!");
+
+                        //make a name for each new image added.
                         List<String> randomNames = [];
                         int i = 0;
-                        print("site images length : ${site.images.length}");
                         print("images length: ${images!.length}");
                         while (i < images!.length) {
                           randomNames.add(uuid.v4());
@@ -819,11 +818,17 @@ class _AdminListPageState extends State<AdminListPage> {
 
                             Current state: 
                             The paths are replaced by only the new items
+                            Not terrible
                           */
 
-                        print("Images length: ${images!.length}");
-                        paths = await uploadImages(refName, randomNames);
+                        //upload all new images
+                        final refName = originalName.replaceAll(' ', '');
+                        List<String> newPaths =
+                            await uploadImages(refName, randomNames);
                         print("Made it past uploading images");
+
+                        // add new paths to old paths
+                        paths.addAll(newPaths);
                       }
 
                       // add "other" if chosenFilters is empty
