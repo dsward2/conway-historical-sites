@@ -782,8 +782,28 @@ class _AdminListPageState extends State<AdminListPage> {
 
                     print("Length of site list: ${site.images.length}");
 
+                    // remove any deleted images
+                    if (site.images.length < site.imageUrls.length) {
+                      // this means that an image has been deleted
+                      print("If statement reached. An item has been deleted");
+                      for (Uint8List? image in copyOfOriginalImageList) {
+                        print("image being ichecked");
+                        // check to see if image is in current list
+                        if (!site.images.contains(image)) {
+                          // image is not in current images. thus we must remove it from imageurls
+                          final index = copyOfOriginalImageList.indexOf(image);
+
+                          // remove site.imageUrls[index] so the delted item is removed
+                          site.imageUrls.removeAt(index);
+
+                          print("An item has been removed!");
+                        }
+                      }
+                    }
+
                     // add all site images to the paths
                     paths.addAll(site.imageUrls);
+                    print("Paths size: ${paths.length}");
 
                     if (nameController.text.isNotEmpty &&
                         descriptionController.text.isNotEmpty) {
@@ -798,6 +818,7 @@ class _AdminListPageState extends State<AdminListPage> {
                         List<String> randomNames = [];
                         int i = 0;
                         if (images != null) {
+                          //if we never added new images, then we don't need to upload anything
                           print("images length: ${images!.length}");
                           while (i < images!.length) {
                             randomNames.add(uuid.v4());
