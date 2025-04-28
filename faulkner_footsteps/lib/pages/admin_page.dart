@@ -779,6 +779,10 @@ class _AdminListPageState extends State<AdminListPage> {
 
                     // Get list of all the current paths
                     List<String> paths = [];
+
+                    print("Length of site list: ${site.images.length}");
+
+                    // add all site images to the paths
                     paths.addAll(site.imageUrls);
 
                     if (nameController.text.isNotEmpty &&
@@ -793,14 +797,15 @@ class _AdminListPageState extends State<AdminListPage> {
                         //make a name for each new image added.
                         List<String> randomNames = [];
                         int i = 0;
-                        print("images length: ${images!.length}");
-                        while (i < images!.length) {
-                          randomNames.add(uuid.v4());
-                          print("Random name thing executed");
-                          i += 1;
-                        }
-                        // this will make the images into files so the images list can have them
-                        /*
+                        if (images != null) {
+                          print("images length: ${images!.length}");
+                          while (i < images!.length) {
+                            randomNames.add(uuid.v4());
+                            print("Random name thing executed");
+                            i += 1;
+                          }
+                          // this will make the images into files so the images list can have them
+                          /*
                             I suspect that the issue lies here. I am trying to re upload all the files
                             within site.images. The issue is that they are in a Uint8list format. 
                             It appears to work okay (it doesn't throw errors) but when I try to upload them, 
@@ -821,14 +826,15 @@ class _AdminListPageState extends State<AdminListPage> {
                             Not terrible
                           */
 
-                        //upload all new images
-                        final refName = originalName.replaceAll(' ', '');
-                        List<String> newPaths =
-                            await uploadImages(refName, randomNames);
-                        print("Made it past uploading images");
+                          //upload all new images
+                          final refName = originalName.replaceAll(' ', '');
+                          List<String> newPaths =
+                              await uploadImages(refName, randomNames);
+                          print("Made it past uploading images");
 
-                        // add new paths to old paths
-                        paths.addAll(newPaths);
+                          // add new paths to old paths
+                          paths.addAll(newPaths);
+                        }
                       }
 
                       // add "other" if chosenFilters is empty
