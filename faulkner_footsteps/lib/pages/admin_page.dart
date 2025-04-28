@@ -748,7 +748,7 @@ class _AdminListPageState extends State<AdminListPage> {
                             const Color.fromARGB(255, 218, 186, 130),
                       ),
                       onPressed: () {
-                        _showEditSiteImagesDialog(site.images);
+                        _showEditSiteImagesDialog(site.images, site.imageUrls);
                         print("Reached post dialog opening");
                         print("Length p: ${site.images.length}");
                         for (Uint8List? s in site.images) {
@@ -783,6 +783,9 @@ class _AdminListPageState extends State<AdminListPage> {
                     print("Length of site list: ${site.images.length}");
 
                     // remove any deleted images
+                    // NOTE: it may be better to handle this when we delete items.
+                    // I could probably also reorder things there very easily.
+                    // TODO: see above
                     if (site.images.length < site.imageUrls.length) {
                       // this means that an image has been deleted
                       print("If statement reached. An item has been deleted");
@@ -902,11 +905,14 @@ class _AdminListPageState extends State<AdminListPage> {
     );
   }
 
-  Future<void> _showEditSiteImagesDialog(List<Uint8List?> siteImages) {
+  Future<void> _showEditSiteImagesDialog(
+      List<Uint8List?> siteImages, List<String> siteImageURLs) {
     List<Uint8List> listOfSelectedImages = [];
     List<Uint8List> markedForRemoval = [];
     List<Uint8List?> copyOfOriginalList = [];
+    List<String> copyOfOriginalURLList = [];
     copyOfOriginalList.addAll(siteImages);
+    copyOfOriginalURLList.addAll(siteImageURLs);
     return showDialog(
         context: context,
         builder: (BuildContext context) {
@@ -959,6 +965,13 @@ class _AdminListPageState extends State<AdminListPage> {
                           }
                           final Uint8List? item = siteImages.removeAt(oldIndex);
                           siteImages.insert(newIndex, item);
+
+                          final String URLItem =
+                              siteImageURLs.removeAt(oldIndex);
+                          siteImageURLs.insert(newIndex, URLItem);
+
+                          print("Old Index: $oldIndex");
+                          print("New Index: $newIndex");
                         });
                       },
                       itemBuilder: (BuildContext context, int index) {
@@ -1048,6 +1061,8 @@ class _AdminListPageState extends State<AdminListPage> {
                     setState(() {
                       siteImages.clear();
                       siteImages.addAll(copyOfOriginalList); //reset the list
+                      siteImageURLs.clear();
+                      siteImageURLs.addAll(copyOfOriginalURLList);
                     });
                     print("Length: ${siteImages.length}");
                     Navigator.pop(context);
