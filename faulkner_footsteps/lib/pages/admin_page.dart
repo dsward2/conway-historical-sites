@@ -797,8 +797,10 @@ class _AdminListPageState extends State<AdminListPage> {
                           final index = copyOfOriginalImageList.indexOf(image);
 
                           // remove site.imageUrls[index] so the delted item is removed
-                          site.imageUrls.removeAt(index);
+                          String url = site.imageUrls.removeAt(index);
 
+                          storageRef.child("$url").delete();
+                          print("Item deleted: $url");
                           print("An item has been removed!");
                         }
                       }
