@@ -207,6 +207,7 @@ class _AdminListPageState extends State<AdminListPage> {
     List<InfoText> blurbs = [];
 
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -492,6 +493,7 @@ class _AdminListPageState extends State<AdminListPage> {
     final dateController = TextEditingController();
 
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -571,6 +573,7 @@ class _AdminListPageState extends State<AdminListPage> {
     List<InfoText> blurbs = List.from(site.blurbs);
 
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -916,6 +919,7 @@ class _AdminListPageState extends State<AdminListPage> {
     copyOfOriginalList.addAll(siteImages);
     copyOfOriginalURLList.addAll(siteImageURLs);
     return showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return StatefulBuilder(builder: (context, setState) {
@@ -1091,6 +1095,7 @@ class _AdminListPageState extends State<AdminListPage> {
     final dateController = TextEditingController(text: blurbs[index].date);
 
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
