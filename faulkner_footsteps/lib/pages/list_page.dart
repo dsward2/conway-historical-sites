@@ -82,8 +82,8 @@ class _ListPageState extends State<ListPage> {
     updateTimer = Timer.periodic(const Duration(milliseconds: 1000), _update);
     displaySites = widget.app_state.historicalSites;
     fullSiteList = widget.app_state.historicalSites;
-    activeFilters.addAll(widget.app_state
-        .siteFilters); //I suspect that this doesn't load quickly enough and that is why active filters starts empty
+    // activeFilters.addAll(widget.app_state
+    // .siteFilters); //I suspect that this doesn't load quickly enough and that is why active filters starts empty
     searchSites = fullSiteList;
 
     _searchController = SearchController();
@@ -246,6 +246,7 @@ class _ListPageState extends State<ListPage> {
       print("Full Site List: $fullSiteList");
       print("Display Sites: $displaySites");
       activeFilters.addAll(widget.app_state.siteFilters);
+      print("ALL active filters: $activeFilters");
     }
     /*
       I want to put the other filter last, so I remove it from th e

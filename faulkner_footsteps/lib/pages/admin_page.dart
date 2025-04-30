@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 import 'package:faulkner_footsteps/app_state.dart';
 import 'package:faulkner_footsteps/dialogs/filter_Dialog.dart';
 import 'package:faulkner_footsteps/objects/hist_site.dart';
@@ -14,6 +15,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:swipe_image_gallery/swipe_image_gallery.dart';
 import 'package:uuid/uuid.dart';
 
 class AdminListPage extends StatefulWidget {
@@ -28,10 +30,11 @@ class _AdminListPageState extends State<AdminListPage> {
   late Timer updateTimer;
   int _selectedIndex = 0;
   File? image;
+  List<File>? images;
   final storage = FirebaseStorage.instance;
   final storageRef = FirebaseStorage.instance.ref();
   var uuid = Uuid();
-  List<SiteFilter> chosenFilters = [];
+  // List<SiteFilter> chosenFilters = [];
   List<SiteFilter> acceptableFilters = [];
 
   @override
@@ -50,6 +53,26 @@ class _AdminListPageState extends State<AdminListPage> {
     }
   }
 
+  Future pickImages() async {
+    try {
+      final images = await ImagePicker().pickMultiImage();
+      if (images == null) {
+        print("This is null!");
+        return;
+      }
+      ;
+      List<File> t = [];
+      for (XFile image in images) {
+        t.add(File(image.path));
+      }
+      this.images = t;
+      setState(() {});
+    } on PlatformException catch (e) {
+      print("Failed to pick images: $e: ");
+    }
+    setState(() {});
+  }
+
   Future pickImage() async {
     try {
       final image = await ImagePicker().pickImage(
@@ -64,6 +87,54 @@ class _AdminListPageState extends State<AdminListPage> {
       print("Failed to pick image: $e");
     }
     setState(() {});
+  }
+
+  Future<List<String>> uploadImages(
+      String folderName, List<String> fileNames) async {
+    print("begun uploading images");
+    //I want to store a reference to each image and return the list of strings
+    final metadata = SettableMetadata(contentType: "image/jpeg");
+    print("made metadata");
+    //change the filename
+    folderName = folderName.replaceAll(' ', '');
+    print("adjusted folder name");
+    List<String> paths = [];
+    List<UploadTask> uploadTasks = [];
+    int count = 0;
+    print("prior to for loop");
+    for (String fileName in fileNames) {
+      var path = "images/$folderName/$fileName.jpg";
+      paths.add(path);
+      print("path added");
+      uploadTasks.add(storageRef.child(path).putFile(images![count]));
+      print("upload task added");
+      uploadTasks[count].snapshotEvents.listen((TaskSnapshot taskSnapshot) {
+        switch (taskSnapshot.state) {
+          case TaskState.running:
+            final progress = 100.0 *
+                (taskSnapshot.bytesTransferred / taskSnapshot.totalBytes);
+            print("Upload is $progress% complete.");
+            break;
+          case TaskState.paused:
+            print("Upload is paused.");
+            break;
+          case TaskState.canceled:
+            print("Upload was canceled");
+            break;
+          case TaskState.error:
+            print("Upload error");
+            break;
+          case TaskState.success:
+            print("Upload success");
+            break;
+        }
+      });
+
+      count += 1;
+      print("count incremented. Count: $count");
+    }
+
+    return paths;
   }
 
   Future<String> uploadImage(String folderName, String fileName) async {
@@ -131,6 +202,8 @@ class _AdminListPageState extends State<AdminListPage> {
     final descriptionController = TextEditingController();
     final latController = TextEditingController(text: "0.0");
     final lngController = TextEditingController(text: "0.0");
+    List<SiteFilter> chosenFilters = [];
+
     List<InfoText> blurbs = [];
 
     return showDialog(
@@ -288,7 +361,7 @@ class _AdminListPageState extends State<AdminListPage> {
                             const Color.fromARGB(255, 218, 186, 130),
                       ),
                       onPressed: () async {
-                        await pickImage();
+                        await pickImages();
                         setState(
                             () {}); //idk why, but setState is acting weird here but it works now
                       },
@@ -342,6 +415,19 @@ class _AdminListPageState extends State<AdminListPage> {
                               width: 160, height: 160, fit: BoxFit.contain)
                           : FlutterLogo()
                     ],
+                    if (images != null) ...[
+                      SizedBox(
+                        //todo: replace with media.sizequery?
+                        height: 200,
+                        width: 200,
+                        child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: images!.length,
+                            itemBuilder: (context, index) {
+                              return Image.file(images![index]);
+                            }),
+                      )
+                    ],
                   ],
                 ),
               ),
@@ -361,14 +447,24 @@ class _AdminListPageState extends State<AdminListPage> {
                     //I think putting an async here is fine.
                     if (nameController.text.isNotEmpty &&
                         descriptionController.text.isNotEmpty) {
-                      String randomName = uuid.v4();
-                      String path =
-                          await uploadImage(nameController.text, randomName);
+                      List<String> randomNames = [];
+                      int i = 0;
+                      while (i < images!.length) {
+                        randomNames.add(uuid.v4());
+                        print("Random name thing executed");
+                        i += 1;
+                      }
+                      List<String> paths =
+                          await uploadImages(nameController.text, randomNames);
+                      print("Made it past uploading images");
+                      // String randomName = uuid.v4();
+                      // String path =
+                      // await uploadImage(nameController.text, randomName);
                       final newSite = HistSite(
                         name: nameController.text,
                         description: descriptionController.text,
                         blurbs: blurbs,
-                        imageUrls: [path],
+                        imageUrls: paths,
                         avgRating: 0.0,
                         ratingAmount: 0,
                         filters: chosenFilters,
@@ -468,6 +564,10 @@ class _AdminListPageState extends State<AdminListPage> {
     final descriptionController = TextEditingController(text: site.description);
     final latController = TextEditingController(text: site.lat.toString());
     final lngController = TextEditingController(text: site.lng.toString());
+    List<SiteFilter> chosenFilters = site.filters;
+    List<Uint8List?> copyOfOriginalImageList = [];
+    copyOfOriginalImageList.addAll(site.images);
+
     List<InfoText> blurbs = List.from(site.blurbs);
 
     return showDialog(
@@ -582,6 +682,81 @@ class _AdminListPageState extends State<AdminListPage> {
                       },
                       child: const Text('Add Blurb'),
                     ),
+                    MenuAnchor(
+                        style: MenuStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                                const Color.fromARGB(255, 238, 214, 196)),
+                            side: WidgetStatePropertyAll(BorderSide(
+                                color: Color.fromARGB(255, 72, 52, 52),
+                                width: 2.0)),
+                            shape: WidgetStatePropertyAll(
+                                RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(20.0)))),
+                        builder: (BuildContext context,
+                            MenuController controller, Widget? child) {
+                          return ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromARGB(255, 218, 186, 130),
+                              ),
+                              // focusNode: _buttonFocusNode,
+                              onPressed: () {
+                                if (controller.isOpen) {
+                                  controller.close();
+                                } else {
+                                  controller.open();
+                                }
+                              },
+                              child: const Text("Add Filters"));
+                        },
+                        menuChildren: acceptableFilters
+                            .map((filter) => CheckboxMenuButton(
+                                style: ButtonStyle(
+                                    textStyle: WidgetStatePropertyAll(TextStyle(
+                                        color: Color.fromARGB(255, 72, 52, 52),
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold))),
+                                closeOnActivate: false,
+                                value: chosenFilters.contains(filter),
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (!chosenFilters.contains(filter)) {
+                                      chosenFilters.add(filter);
+                                      print(chosenFilters);
+                                    } else {
+                                      chosenFilters.remove(filter);
+                                      print(chosenFilters);
+                                    }
+                                  });
+                                },
+                                child: Text((filter.name))))
+                            .toList()
+
+                        // [
+                        //   CheckboxMenuButton(
+                        //       value: false,
+                        //       onChanged: (bool? value) {
+                        //         print("changed");
+                        //       },
+                        //       child: const Text("Message"))
+                        // ]
+                        ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color.fromARGB(255, 218, 186, 130),
+                      ),
+                      onPressed: () {
+                        _showEditSiteImagesDialog(site.images, site.imageUrls);
+                        print("Reached post dialog opening");
+                        print("Length p: ${site.images.length}");
+                        for (Uint8List? s in site.images) {
+                          print("Image: $s");
+                        }
+                      },
+                      child: const Text('Edit Images'),
+                    ),
                   ],
                 ),
               ),
@@ -594,37 +769,133 @@ class _AdminListPageState extends State<AdminListPage> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color.fromARGB(255, 218, 186, 130),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    print("pressed submit!");
                     // Get the original site name for updating or deleting the document
                     final originalName = site.name;
                     final oldDocRef = FirebaseFirestore.instance
                         .collection('sites')
                         .doc(originalName);
 
-                    final updatedSite = HistSite(
-                      name: nameController.text,
-                      description: descriptionController.text,
-                      blurbs: blurbs,
-                      imageUrls: site.imageUrls,
-                      avgRating: site.avgRating,
-                      ratingAmount: site.ratingAmount,
-                      filters: [],
-                      lat: double.tryParse(latController.text) ?? site.lat,
-                      lng: double.tryParse(lngController.text) ?? site.lng,
-                    );
+                    // Get list of all the current paths
+                    List<String> paths = [];
 
-                    // If name changed, delete old document and create new one
-                    if (originalName != nameController.text) {
-                      oldDocRef.delete().then((_) {
-                        widget.app_state.addSite(updatedSite);
-                      });
-                    } else {
-                      // Just update existing document
-                      widget.app_state.addSite(updatedSite);
+                    print("Length of site list: ${site.images.length}");
+
+                    // remove any deleted images
+                    // NOTE: it may be better to handle this when we delete items.
+                    // I could probably also reorder things there very easily.
+                    // TODO: see above
+                    if (site.images.length < site.imageUrls.length) {
+                      // this means that an image has been deleted
+                      print("If statement reached. An item has been deleted");
+                      for (Uint8List? image in copyOfOriginalImageList) {
+                        print("image being ichecked");
+                        // check to see if image is in current list
+                        if (!site.images.contains(image)) {
+                          // image is not in current images. thus we must remove it from imageurls
+                          final index = copyOfOriginalImageList.indexOf(image);
+
+                          // remove site.imageUrls[index] so the delted item is removed
+                          String url = site.imageUrls.removeAt(index);
+
+                          storageRef.child("$url").delete();
+                          print("Item deleted: $url");
+                          print("An item has been removed!");
+                        }
+                      }
                     }
 
-                    Navigator.pop(context);
-                    setState(() {});
+                    // add all site images to the paths
+                    paths.addAll(site.imageUrls);
+                    print("Paths size: ${paths.length}");
+
+                    if (nameController.text.isNotEmpty &&
+                        descriptionController.text.isNotEmpty) {
+                      if (site.images != copyOfOriginalImageList) {
+                        // // delete the old images
+                        // print("Deleting ${refName}");
+                        // final path = "images/$refName";
+
+                        // storageRef.child("$path").delete();
+
+                        //make a name for each new image added.
+                        List<String> randomNames = [];
+                        int i = 0;
+                        if (images != null) {
+                          //if we never added new images, then we don't need to upload anything
+                          print("images length: ${images!.length}");
+                          while (i < images!.length) {
+                            randomNames.add(uuid.v4());
+                            print("Random name thing executed");
+                            i += 1;
+                          }
+                          // this will make the images into files so the images list can have them
+                          /*
+                            I suspect that the issue lies here. I am trying to re upload all the files
+                            within site.images. The issue is that they are in a Uint8list format. 
+                            It appears to work okay (it doesn't throw errors) but when I try to upload them, 
+                            it says they don't exist. When I try to view the images in the images list, my terminal
+                            starts speaking in tongues. 
+
+                            Solution Ideas: 
+                            I previously wanted to delete all files, then reupload them to the storage
+                            If I cannot reupload previously uploaded files (they are currently uint8list)
+                            then I need to only reupload the files I just added. 
+
+                            If a previously uploaded file is no longer withing the list, i need to delete it
+
+
+
+                            Current state: 
+                            The paths are replaced by only the new items
+                            Not terrible
+                          */
+
+                          //upload all new images
+                          final refName = originalName.replaceAll(' ', '');
+                          List<String> newPaths =
+                              await uploadImages(refName, randomNames);
+                          print("Made it past uploading images");
+
+                          // add new paths to old paths
+                          paths.addAll(newPaths);
+                        }
+                      }
+
+                      // add "other" if chosenFilters is empty
+
+                      if (chosenFilters.isEmpty) {
+                        chosenFilters.add(SiteFilter(name: "Other"));
+                      }
+
+                      final updatedSite = HistSite(
+                        name: nameController.text,
+                        description: descriptionController.text,
+                        blurbs: blurbs,
+                        imageUrls: site.images == copyOfOriginalImageList
+                            ? site.imageUrls
+                            : paths,
+                        avgRating: site.avgRating,
+                        ratingAmount: site.ratingAmount,
+                        filters: chosenFilters,
+                        lat: double.tryParse(latController.text) ?? site.lat,
+                        lng: double.tryParse(lngController.text) ?? site.lng,
+                      );
+
+                      // If name changed, delete old document and create new one
+                      if (originalName != nameController.text) {
+                        oldDocRef.delete().then((_) {
+                          widget.app_state.addSite(updatedSite);
+                        });
+                      } else {
+                        // Just update existing document
+                        widget.app_state.addSite(updatedSite);
+                      }
+
+                      Navigator.pop(context);
+                      setState(() {});
+                    }
                   },
                   child: const Text('Save Changes'),
                 ),
@@ -634,6 +905,184 @@ class _AdminListPageState extends State<AdminListPage> {
         );
       },
     );
+  }
+
+  Future<void> _showEditSiteImagesDialog(
+      List<Uint8List?> siteImages, List<String> siteImageURLs) {
+    List<Uint8List> listOfSelectedImages = [];
+    List<Uint8List> markedForRemoval = [];
+    List<Uint8List?> copyOfOriginalList = [];
+    List<String> copyOfOriginalURLList = [];
+    copyOfOriginalList.addAll(siteImages);
+    copyOfOriginalURLList.addAll(siteImageURLs);
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              // actionsAlignment: MainAxisAlignment.spaceBetween,
+              actionsOverflowAlignment: OverflowBarAlignment.center,
+              actionsOverflowDirection: VerticalDirection.down,
+              backgroundColor: const Color.fromARGB(255, 238, 214, 196),
+              title: Text(
+                "Edit Images",
+                style: GoogleFonts.ultra(
+                    textStyle:
+                        const TextStyle(color: Color.fromARGB(255, 76, 32, 8))),
+              ),
+              content: Column(children: [
+                SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.6,
+                  width: MediaQuery.of(context).size.width * 0.75,
+                  child: ReorderableListView.builder(
+                      proxyDecorator: (child, index, animation) {
+                        return AnimatedBuilder(
+                          animation: animation,
+                          builder: (BuildContext context, Widget? child) {
+                            final double animValue =
+                                Curves.easeInOut.transform(animation.value);
+                            final double elevation =
+                                lerpDouble(1, 20, animValue)!;
+                            final double scale = lerpDouble(1, 1.1, animValue)!;
+                            return Transform.scale(
+                              scale: scale,
+                              // Create a Card based on the color and the content of the dragged one
+                              // and set its elevation to the animated value.
+                              child: Card(
+                                  elevation: elevation,
+                                  color: Color.fromARGB(255, 255, 243, 228),
+                                  child: child),
+                            );
+                          },
+                          child: child,
+                        );
+                      },
+                      buildDefaultDragHandles: false,
+                      scrollDirection: Axis.vertical,
+                      itemCount: siteImages.length,
+                      onReorder: (int oldIndex, int newIndex) {
+                        setState(() {
+                          if (oldIndex < newIndex) {
+                            newIndex -= 1;
+                          }
+                          final Uint8List? item = siteImages.removeAt(oldIndex);
+                          siteImages.insert(newIndex, item);
+
+                          final String URLItem =
+                              siteImageURLs.removeAt(oldIndex);
+                          siteImageURLs.insert(newIndex, URLItem);
+
+                          print("Old Index: $oldIndex");
+                          print("New Index: $newIndex");
+                        });
+                      },
+                      itemBuilder: (BuildContext context, int index) {
+                        return Card(
+                          elevation: 8,
+                          shadowColor: Color.fromARGB(255, 107, 79, 79),
+                          key: Key('$index'),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
+                          color: const Color.fromARGB(255, 238, 214, 196),
+                          child: ListTile(
+                            leading: Checkbox(
+                                activeColor:
+                                    const Color.fromARGB(255, 107, 79, 79),
+                                value: listOfSelectedImages
+                                    .contains(siteImages[index]),
+                                onChanged: (bool? value) {
+                                  print("Image checkbox checked!!");
+                                  setState(() {
+                                    if (!value!) {
+                                      listOfSelectedImages
+                                          .remove(siteImages[index]);
+                                    } else {
+                                      listOfSelectedImages
+                                          .add(siteImages[index]!);
+                                    }
+                                  });
+                                }),
+                            title: Image.memory(siteImages[index]!,
+                                fit: BoxFit.contain),
+                            trailing: ReorderableDragStartListener(
+                                index: siteImages.indexOf(siteImages[index]),
+                                child: Icon(Icons.drag_handle)),
+                          ),
+                        );
+                      }),
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color.fromARGB(255, 218, 186, 130)),
+                        onPressed: () {
+                          for (Uint8List? item in listOfSelectedImages) {
+                            if (item != null) {
+                              markedForRemoval.add(item);
+                            }
+                          }
+                          setState(() {
+                            siteImages.removeWhere(
+                                (test) => markedForRemoval.contains(test));
+                          });
+                          markedForRemoval.clear();
+                          print("Delete Images button is pressed");
+                        },
+                        child: const Text("Delete Images")),
+                    ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                const Color.fromARGB(255, 218, 186, 130)),
+                        onPressed: () async {
+                          List<File> newImages = [];
+                          await pickImages();
+                          if (images != null) {
+                            newImages = images!;
+                          }
+                          List<Uint8List> newInt8List = [];
+
+                          // turn file images into UInt8List
+                          for (File i in newImages) {
+                            Uint8List newFile = await i.readAsBytes();
+                            newInt8List.add(newFile);
+                          }
+                          siteImages.addAll(newInt8List);
+                          setState(() {});
+                        },
+                        child: const Text("Add Images")),
+                  ],
+                )
+              ]),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    setState(() {
+                      siteImages.clear();
+                      siteImages.addAll(copyOfOriginalList); //reset the list
+                      siteImageURLs.clear();
+                      siteImageURLs.addAll(copyOfOriginalURLList);
+                    });
+                    print("Length: ${siteImages.length}");
+                    Navigator.pop(context);
+                  },
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        backgroundColor:
+                            const Color.fromARGB(255, 218, 186, 130)),
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Submit Changes"))
+              ],
+            );
+          });
+        });
   }
 
   Future<void> _showEditBlurbDialog(List<InfoText> blurbs, int index) async {
@@ -691,6 +1140,7 @@ class _AdminListPageState extends State<AdminListPage> {
                 backgroundColor: const Color.fromARGB(255, 218, 186, 130),
               ),
               onPressed: () {
+                print("pressed save changes");
                 blurbs[index] = InfoText(
                   title: titleController.text,
                   value: valueController.text,
@@ -704,6 +1154,61 @@ class _AdminListPageState extends State<AdminListPage> {
         );
       },
     );
+  }
+
+  Future<void> showAddFilterDialog() {
+    final nameController = TextEditingController();
+
+    return showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: const Color.fromARGB(255, 238, 214, 196),
+              title: Text(
+                "Add New Filter",
+                style: GoogleFonts.ultra(
+                    textStyle: const TextStyle(
+                  color: Color.fromARGB(255, 76, 32, 8),
+                )),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                      controller: nameController,
+                      decoration: const InputDecoration(
+                          labelText: "Filter Name",
+                          labelStyle:
+                              TextStyle(color: Color.fromARGB(255, 76, 32, 8))))
+                ],
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel")),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          const Color.fromARGB(255, 218, 186, 130)),
+                  onPressed: () async {
+                    //do stuff
+                    for (SiteFilter filter in widget.app_state.siteFilters) {
+                      if (filter.name == nameController.text) {
+                        print("Filter is already added!");
+                        return;
+                      }
+                    }
+                    widget.app_state.addFilter(nameController.text);
+                    Navigator.pop(context);
+                    setState(() {});
+                  },
+                  child: const Text("Save Filter"),
+                )
+              ],
+            );
+          });
+        });
   }
 
   Widget _buildAdminContent() {
@@ -727,6 +1232,18 @@ class _AdminListPageState extends State<AdminListPage> {
             ),
           ),
         ),
+        ElevatedButton(
+            style: ElevatedButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 218, 186, 130),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 16)),
+            onPressed: showAddFilterDialog,
+            child: Text(
+              "Add New Filter Type",
+              style: GoogleFonts.ultra(
+                  textStyle:
+                      const TextStyle(color: Color.fromARGB(255, 76, 32, 8))),
+            )),
         Expanded(
           child: ListView.builder(
             itemCount: widget.app_state.historicalSites.length,

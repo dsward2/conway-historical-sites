@@ -335,24 +335,32 @@ class ApplicationState extends ChangeNotifier {
         SiteFilter f = new SiteFilter(name: name);
         _siteFilters.add(f);
         print("filter added: $name");
-        // if (!_siteFilters.isEmpty &&
-        //     _siteFilters.contains(siteFilters
-        //         .firstWhere((test) => test.name.contains("Other")))) {
-        //   _siteFilters.add(SiteFilter(name: "Other")); //add other site filter
-        // }
       }
       if (!_siteFilters.any((f) => f.name == "Other")) {
         _siteFilters.add(SiteFilter(name: "Other"));
       }
-    }
-    // SiteFilter other = _siteFilters.elementAt(0);
-    // SiteFilter last = _siteFilters.last;
-
-    // _siteFilters.removeLast();
-    // _siteFilters.add(other);
-    // _siteFilters[0] = last;
-    catch (e) {
+    } catch (e) {
       print("Error loading filters: $e");
+    }
+  }
+
+  Future<void> addFilter(String name) async {
+    if (!_loggedIn) return;
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+
+    if (userId == null) return;
+
+    try {
+      _siteFilters.add(SiteFilter(name: name));
+
+      var data = {"name": name};
+
+      await FirebaseFirestore.instance
+          .collection("filters")
+          .doc(name)
+          .set(data);
+    } catch (e) {
+      print("Error saving filter: $e");
     }
   }
 
