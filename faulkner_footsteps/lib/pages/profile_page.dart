@@ -1,4 +1,5 @@
 import 'package:faulkner_footsteps/app_router.dart';
+import 'package:faulkner_footsteps/pages/achievement.dart';
 import 'package:faulkner_footsteps/pages/admin_page.dart';
 import 'package:faulkner_footsteps/pages/login_page.dart';
 import 'package:flutter/material.dart';
@@ -6,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:faulkner_footsteps/app_state.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -14,13 +16,93 @@ class ProfilePage extends StatefulWidget {
   State<ProfilePage> createState() => _ProfilePageState();
 }
 
-class _ProfilePageState extends State<ProfilePage> {
+class _ProfilePageState extends State<ProfilePage> with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  
+  // Animation controller for the achievement button
+  late AnimationController _animationController;
+  late Animation<double> _scaleAnimation;
+  late Animation<Color?> _colorAnimation;
+  
+  // Track notification count
+  int newAchievementCount = 0;
+  bool _hasCheckedAchievements = false;
+
+  @override
+  void initState() {
+    super.initState();
+    
+    // Set up animations
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+    
+    // Create pulsating animation
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.1).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    
+    // Create color animation (glow effect)
+    _colorAnimation = ColorTween(
+      begin: const Color.fromARGB(255, 107, 79, 79),
+      end: const Color.fromARGB(255, 76, 175, 80),
+    ).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    
+    // Start the animation and make it repeat
+    _animationController.repeat(reverse: true);
+    
+    // Check for notification count
+    _loadAchievementNotificationStatus();
+  }
+  
+  // Load achievement notification status
+  Future<void> _loadAchievementNotificationStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastAchievementCount = prefs.getInt('last_achievement_count') ?? 0;
+    final hasViewedAchievements = prefs.getBool('has_viewed_achievements') ?? false;
+    
+    // Get current achievements count
+    final appState = Provider.of<ApplicationState>(context, listen: false);
+    final currentCount = appState.visitedPlaces.length;
+    
+    setState(() {
+      _hasCheckedAchievements = hasViewedAchievements;
+      
+      // If user has never viewed achievements or has new ones
+      if (!hasViewedAchievements || currentCount > lastAchievementCount) {
+        newAchievementCount = currentCount - lastAchievementCount;
+        if (!hasViewedAchievements && currentCount == 0) {
+          // For new users who haven't visited any sites
+          newAchievementCount = 1; // Show notification to encourage exploring
+        }
+      } else {
+        newAchievementCount = 0;
+      }
+    });
+  }
+  
+  // Save achievement notification status
+  Future<void> _saveAchievementNotificationStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    final appState = Provider.of<ApplicationState>(context, listen: false);
+    
+    await prefs.setInt('last_achievement_count', appState.visitedPlaces.length);
+    await prefs.setBool('has_viewed_achievements', true);
+  }
 
   Future<void> _changePassword() async {
     if (!_formKey.currentState!.validate()) return;
@@ -69,6 +151,27 @@ class _ProfilePageState extends State<ProfilePage> {
         });
       }
     }
+  }
+
+  void _navigateToAchievementsPage() async {
+    // Reset notification count
+    setState(() {
+      newAchievementCount = 0;
+    });
+    
+    // Save the current achievement count
+    await _saveAchievementNotificationStatus();
+    
+    // Navigate to achievements page with the app state's historical sites
+    final appState = Provider.of<ApplicationState>(context, listen: false);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AchievementsPage(
+          displaySites: appState.historicalSites,
+        ),
+      ),
+    );
   }
 
   @override
@@ -221,14 +324,113 @@ class _ProfilePageState extends State<ProfilePage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'My Achievements',
-                        style: GoogleFonts.ultra(
-                          textStyle: const TextStyle(
-                            color: Color.fromARGB(255, 72, 52, 52),
-                            fontSize: 16,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'My Achievements',
+                            style: GoogleFonts.ultra(
+                              textStyle: const TextStyle(
+                                color: Color.fromARGB(255, 72, 52, 52),
+                                fontSize: 16,
+                              ),
+                            ),
                           ),
-                        ),
+                          // New achievement button with animation and notification badge
+                          Stack(
+                            clipBehavior: Clip.none, // This prevents clipping of child elements
+                            children: [
+                              // Animated achievement button
+                              AnimatedBuilder(
+                                animation: _animationController,
+                                builder: (context, child) {
+                                  return Transform.scale(
+                                    scale: newAchievementCount > 0 ? _scaleAnimation.value : 1.0,
+                                    child: Container(
+                                      width: 40,
+                                      height: 40,
+                                      decoration: BoxDecoration(
+                                        color: newAchievementCount > 0 
+                                            ? _colorAnimation.value
+                                            : Color.fromARGB(255, 107, 79, 79),
+                                        borderRadius: BorderRadius.circular(8.0),
+                                        border: Border.all(
+                                          color: Color.fromARGB(255, 255, 243, 228),
+                                          width: 2.0,
+                                        ),
+                                        boxShadow: newAchievementCount > 0
+                                            ? [
+                                                BoxShadow(
+                                                  color: Colors.green.withOpacity(0.3),
+                                                  spreadRadius: 1,
+                                                  blurRadius: 6,
+                                                  offset: Offset(0, 0),
+                                                )
+                                              ]
+                                            : null,
+                                      ),
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(8.0),
+                                          onTap: _navigateToAchievementsPage,
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.emoji_events,
+                                              color: Color.fromARGB(255, 255, 243, 228),
+                                              size: 24,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              
+                              // Notification badge with adjusted position
+                              if (newAchievementCount > 0)
+                                Positioned(
+                                  top: -8,
+                                  right: -8,
+                                  child: Container(
+                                    padding: EdgeInsets.all(4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Color.fromARGB(255, 255, 243, 228),
+                                        width: 1.5,
+                                      ),
+                                      // Add a bit of margin to ensure visibility
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          spreadRadius: 1,
+                                          blurRadius: 2,
+                                          offset: Offset(0, 1),
+                                        ),
+                                      ],
+                                    ),
+                                    constraints: BoxConstraints(
+                                      minWidth: 18,
+                                      minHeight: 18,
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        newAchievementCount.toString(),
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       Consumer<ApplicationState>(
@@ -540,6 +742,7 @@ class _ProfilePageState extends State<ProfilePage> {
     _currentPasswordController.dispose();
     _newPasswordController.dispose();
     _confirmPasswordController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 }
