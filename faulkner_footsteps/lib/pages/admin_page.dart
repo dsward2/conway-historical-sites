@@ -5,6 +5,7 @@ import 'package:faulkner_footsteps/app_state.dart';
 import 'package:faulkner_footsteps/dialogs/filter_Dialog.dart';
 import 'package:faulkner_footsteps/objects/hist_site.dart';
 import 'package:faulkner_footsteps/objects/info_text.dart';
+import 'package:faulkner_footsteps/objects/site_filter.dart';
 import 'package:faulkner_footsteps/pages/map_display.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
@@ -30,11 +31,16 @@ class _AdminListPageState extends State<AdminListPage> {
   final storage = FirebaseStorage.instance;
   final storageRef = FirebaseStorage.instance.ref();
   var uuid = Uuid();
+  List<SiteFilter> chosenFilters = [];
+  List<SiteFilter> acceptableFilters = [];
 
   @override
   void initState() {
     super.initState();
     updateTimer = Timer.periodic(const Duration(milliseconds: 500), _update);
+    // acceptableFilters.addAll(siteFilter.values);
+    // acceptableFilters.remove(siteFilter.Other);
+    acceptableFilters = widget.app_state.siteFilters;
   }
 
   void _update(Timer timer) {
@@ -119,8 +125,6 @@ class _AdminListPageState extends State<AdminListPage> {
       });
     }
   }
-
-  List<siteFilter> chosenFilters = [];
 
   Future<void> _showAddSiteDialog() async {
     final nameController = TextEditingController();
@@ -217,6 +221,67 @@ class _AdminListPageState extends State<AdminListPage> {
                               ))
                           .toList(),
                     ],
+
+                    MenuAnchor(
+                        style: MenuStyle(
+                            backgroundColor: WidgetStatePropertyAll(
+                                const Color.fromARGB(255, 238, 214, 196)),
+                            side: WidgetStatePropertyAll(BorderSide(
+                                color: Color.fromARGB(255, 72, 52, 52),
+                                width: 2.0)),
+                            shape: WidgetStatePropertyAll(
+                                RoundedRectangleBorder(
+                                    borderRadius:
+                                        BorderRadius.circular(20.0)))),
+                        builder: (BuildContext context,
+                            MenuController controller, Widget? child) {
+                          return ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor:
+                                    const Color.fromARGB(255, 218, 186, 130),
+                              ),
+                              // focusNode: _buttonFocusNode,
+                              onPressed: () {
+                                if (controller.isOpen) {
+                                  controller.close();
+                                } else {
+                                  controller.open();
+                                }
+                              },
+                              child: const Text("Add Filters"));
+                        },
+                        menuChildren: acceptableFilters
+                            .map((filter) => CheckboxMenuButton(
+                                style: ButtonStyle(
+                                    textStyle: WidgetStatePropertyAll(TextStyle(
+                                        color: Color.fromARGB(255, 72, 52, 52),
+                                        fontSize: 16.0,
+                                        fontWeight: FontWeight.bold))),
+                                closeOnActivate: false,
+                                value: chosenFilters.contains(filter),
+                                onChanged: (bool? value) {
+                                  setState(() {
+                                    if (!chosenFilters.contains(filter)) {
+                                      chosenFilters.add(filter);
+                                      print(chosenFilters);
+                                    } else {
+                                      chosenFilters.remove(filter);
+                                      print(chosenFilters);
+                                    }
+                                  });
+                                },
+                                child: Text((filter.name))))
+                            .toList()
+
+                        // [
+                        //   CheckboxMenuButton(
+                        //       value: false,
+                        //       onChanged: (bool? value) {
+                        //         print("changed");
+                        //       },
+                        //       child: const Text("Message"))
+                        // ]
+                        ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor:
@@ -291,7 +356,7 @@ class _AdminListPageState extends State<AdminListPage> {
                   ),
                   onPressed: () async {
                     if (chosenFilters.isEmpty) {
-                      chosenFilters.add(siteFilter.Other);
+                      chosenFilters.add(SiteFilter(name: "Other"));
                     }
                     //I think putting an async here is fine.
                     if (nameController.text.isNotEmpty &&
