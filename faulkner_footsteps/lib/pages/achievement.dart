@@ -1,3 +1,4 @@
+import 'package:faulkner_footsteps/objects/site_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:faulkner_footsteps/app_state.dart';
@@ -19,29 +20,28 @@ class ProgressAchievement {
   final String title;
   final String description;
   final List<String> requiredSites;
-  final siteFilter? filterType;
-  
-  ProgressAchievement({
-    required this.title, 
-    required this.description, 
-    required this.requiredSites,
-    this.filterType
-  });
-  
+  final SiteFilter? filterType;
+
+  ProgressAchievement(
+      {required this.title,
+      required this.description,
+      required this.requiredSites,
+      this.filterType});
+
   // Calculate progress based on visited places
   double calculateProgress(Set<String> visitedPlaces) {
     if (requiredSites.isEmpty) return 0.0;
-    
+
     int completedCount = 0;
     for (String site in requiredSites) {
       if (visitedPlaces.contains(site)) {
         completedCount++;
       }
     }
-    
+
     return completedCount / requiredSites.length;
   }
-  
+
   // Check if achievement is completed
   bool isCompleted(Set<String> visitedPlaces) {
     return calculateProgress(visitedPlaces) >= 1.0;
@@ -51,52 +51,48 @@ class ProgressAchievement {
 class AchievementsPageState extends State<AchievementsPage> {
   // Define the progress achievements
   late List<ProgressAchievement> progressAchievements;
-  
+
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize progress achievements
     _initProgressAchievements();
   }
-  
+
   void _initProgressAchievements() {
     progressAchievements = [];
-    
+
     // Find all sites that are monuments
     List<String> monuments = [];
     List<String> hendrixSites = [];
-    
+
     for (var site in widget.displaySites) {
-      if (site.filters.contains(siteFilter.Monument)) {
-        monuments.add(site.name);
+      for (SiteFilter filter in site.filters) {
+        if (filter.name == "Monument") {
+          monuments.add(site.name);
+        }
       }
-      
+
       // For demonstrative purposes, let's consider sites with "Hendrix" or "Hall" in the name
       if (site.name.contains("Hendrix") || site.name.contains("Hall")) {
         hendrixSites.add(site.name);
       }
     }
-    
+
     // Add the monument achievement
-    progressAchievements.add(
-      ProgressAchievement(
+    progressAchievements.add(ProgressAchievement(
         title: "Monument Explorer",
         description: "Visit all monument sites",
         requiredSites: monuments,
-        filterType: siteFilter.Monument
-      )
-    );
-    
+        filterType: SiteFilter(name: "Monument")));
+
     // Add the Hendrix sites achievement
     if (hendrixSites.isNotEmpty) {
-      progressAchievements.add(
-        ProgressAchievement(
+      progressAchievements.add(ProgressAchievement(
           title: "Hendrix Campus Explorer",
           description: "Visit all sites at Hendrix",
-          requiredSites: hendrixSites
-        )
-      );
+          requiredSites: hendrixSites));
     }
   }
 
@@ -142,10 +138,10 @@ class AchievementsPageState extends State<AchievementsPage> {
       );
     }
   }
-  
+
   // Show information popup for progress achievements
-  void showProgressAchievementInfo(
-      BuildContext context, ProgressAchievement achievement, double progress, bool isCompleted) {
+  void showProgressAchievementInfo(BuildContext context,
+      ProgressAchievement achievement, double progress, bool isCompleted) {
     showDialog(
       context: context,
       builder: (context) => Dialog(
@@ -193,7 +189,8 @@ class AchievementsPageState extends State<AchievementsPage> {
 
               // Achievement description
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                 child: Text(
                   achievement.description,
                   style: GoogleFonts.rakkas(
@@ -208,7 +205,8 @@ class AchievementsPageState extends State<AchievementsPage> {
 
               // Achievement Status with progress
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                 child: Column(
                   children: [
                     // Progress bar
@@ -217,7 +215,8 @@ class AchievementsPageState extends State<AchievementsPage> {
                       child: LinearProgressIndicator(
                         value: progress,
                         minHeight: 20,
-                        backgroundColor: const Color.fromARGB(255, 255, 243, 228),
+                        backgroundColor:
+                            const Color.fromARGB(255, 255, 243, 228),
                         color: Colors.green,
                       ),
                     ),
@@ -264,8 +263,13 @@ class AchievementsPageState extends State<AchievementsPage> {
                               child: Row(
                                 children: [
                                   Icon(
-                                    visited ? Icons.check_circle : Icons.circle_outlined,
-                                    color: visited ? Colors.green : const Color.fromARGB(255, 107, 79, 79),
+                                    visited
+                                        ? Icons.check_circle
+                                        : Icons.circle_outlined,
+                                    color: visited
+                                        ? Colors.green
+                                        : const Color.fromARGB(
+                                            255, 107, 79, 79),
                                     size: 20,
                                   ),
                                   const SizedBox(width: 8),
@@ -274,7 +278,10 @@ class AchievementsPageState extends State<AchievementsPage> {
                                       site,
                                       style: GoogleFonts.rakkas(
                                         textStyle: TextStyle(
-                                          color: visited ? Colors.green[800] : const Color.fromARGB(255, 72, 52, 52),
+                                          color: visited
+                                              ? Colors.green[800]
+                                              : const Color.fromARGB(
+                                                  255, 72, 52, 52),
                                           fontSize: 14,
                                         ),
                                       ),
@@ -560,18 +567,16 @@ class AchievementsPageState extends State<AchievementsPage> {
                     ),
                     // List of progress achievements
                     ...progressAchievements.map((achievement) {
-                      double progress = achievement.calculateProgress(appState.visitedPlaces);
-                      bool isCompleted = achievement.isCompleted(appState.visitedPlaces);
-                      
+                      double progress =
+                          achievement.calculateProgress(appState.visitedPlaces);
+                      bool isCompleted =
+                          achievement.isCompleted(appState.visitedPlaces);
+
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 12.0),
                         child: GestureDetector(
                           onTap: () => showProgressAchievementInfo(
-                            context, 
-                            achievement, 
-                            progress, 
-                            isCompleted
-                          ),
+                              context, achievement, progress, isCompleted),
                           child: Container(
                             decoration: BoxDecoration(
                               color: const Color.fromARGB(255, 255, 243, 228),
@@ -596,7 +601,8 @@ class AchievementsPageState extends State<AchievementsPage> {
                               children: [
                                 // Achievement header row
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 12, 16, 8),
                                   child: Row(
                                     children: [
                                       // Achievement icon
@@ -606,20 +612,25 @@ class AchievementsPageState extends State<AchievementsPage> {
                                         decoration: BoxDecoration(
                                           color: isCompleted
                                               ? Colors.green[100]
-                                              : Color.fromARGB(255, 238, 214, 196),
+                                              : Color.fromARGB(
+                                                  255, 238, 214, 196),
                                           shape: BoxShape.circle,
                                           border: Border.all(
                                             color: isCompleted
                                                 ? Colors.green
-                                                : Color.fromARGB(255, 107, 79, 79),
+                                                : Color.fromARGB(
+                                                    255, 107, 79, 79),
                                             width: 2,
                                           ),
                                         ),
                                         child: Icon(
-                                          isCompleted ? Icons.emoji_events : Icons.stars,
+                                          isCompleted
+                                              ? Icons.emoji_events
+                                              : Icons.stars,
                                           color: isCompleted
                                               ? Colors.green
-                                              : Color.fromARGB(255, 107, 79, 79),
+                                              : Color.fromARGB(
+                                                  255, 107, 79, 79),
                                           size: 24,
                                         ),
                                       ),
@@ -627,13 +638,15 @@ class AchievementsPageState extends State<AchievementsPage> {
                                       // Achievement title and description
                                       Expanded(
                                         child: Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               achievement.title,
                                               style: GoogleFonts.ultra(
                                                 textStyle: TextStyle(
-                                                  color: Color.fromARGB(255, 72, 52, 52),
+                                                  color: Color.fromARGB(
+                                                      255, 72, 52, 52),
                                                   fontSize: 16,
                                                   fontWeight: FontWeight.bold,
                                                 ),
@@ -644,7 +657,8 @@ class AchievementsPageState extends State<AchievementsPage> {
                                               achievement.description,
                                               style: GoogleFonts.rakkas(
                                                 textStyle: TextStyle(
-                                                  color: Color.fromARGB(255, 107, 79, 79),
+                                                  color: Color.fromARGB(
+                                                      255, 107, 79, 79),
                                                   fontSize: 14,
                                                 ),
                                               ),
@@ -659,7 +673,8 @@ class AchievementsPageState extends State<AchievementsPage> {
                                           textStyle: TextStyle(
                                             color: isCompleted
                                                 ? Colors.green[800]
-                                                : Color.fromARGB(255, 72, 52, 52),
+                                                : Color.fromARGB(
+                                                    255, 72, 52, 52),
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -670,13 +685,15 @@ class AchievementsPageState extends State<AchievementsPage> {
                                 ),
                                 // Progress bar
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 4, 16, 12),
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(10),
                                     child: LinearProgressIndicator(
                                       value: progress,
                                       minHeight: 8,
-                                      backgroundColor: Color.fromARGB(255, 238, 214, 196),
+                                      backgroundColor:
+                                          Color.fromARGB(255, 238, 214, 196),
                                       color: Colors.green,
                                     ),
                                   ),
@@ -687,7 +704,7 @@ class AchievementsPageState extends State<AchievementsPage> {
                         ),
                       );
                     }).toList(),
-                    
+
                     // Divider between sections
                     Padding(
                       padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -697,7 +714,7 @@ class AchievementsPageState extends State<AchievementsPage> {
                       ),
                     ),
                   ],
-                  
+
                   // Individual Historical Sites Achievements
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
@@ -716,7 +733,8 @@ class AchievementsPageState extends State<AchievementsPage> {
                   GridView.builder(
                     shrinkWrap: true,
                     physics: NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 3,
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
@@ -779,7 +797,8 @@ class AchievementsPageState extends State<AchievementsPage> {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: fontSize, // Adaptive font size
+                                        fontSize:
+                                            fontSize, // Adaptive font size
                                         color: Color.fromARGB(255, 72, 52, 52),
                                       ),
                                       maxLines: 3, // Increased max lines
