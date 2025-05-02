@@ -175,12 +175,16 @@ class _HistSitePage extends State<HistSitePage> {
                                                   ),
                                                 )),
                                             body: MapDisplay(
-                                                currentPosition:
-                                                    widget.currentPosition,
-                                                initialPosition: LatLng(
-                                                    widget.histSite.lat,
-                                                    widget.histSite.lng),
-                                                appState: widget.app_state),
+                                              currentPosition:
+                                                  widget.currentPosition,
+                                              initialPosition: LatLng(
+                                                  widget.histSite.lat,
+                                                  widget.histSite.lng),
+                                              appState: widget.app_state,
+                                              centerPosition: LatLng(
+                                                  widget.histSite.lat,
+                                                  widget.histSite.lng),
+                                            ),
                                           )),
                                 );
                                 ;

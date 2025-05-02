@@ -15,12 +15,13 @@ import 'package:provider/provider.dart';
 class MapDisplay extends StatefulWidget {
   final LatLng currentPosition;
   final ApplicationState appState;
-  const MapDisplay({
-    super.key,
-    required this.currentPosition,
-    required this.appState,
-    required LatLng initialPosition,
-  });
+  final LatLng? centerPosition;
+  const MapDisplay(
+      {super.key,
+      required this.currentPosition,
+      required this.appState,
+      required LatLng initialPosition,
+      this.centerPosition});
 
   @override
   _MapDisplayState createState() => _MapDisplayState();
@@ -35,11 +36,14 @@ class _MapDisplayState extends State<MapDisplay> {
     ..sort((e1, e2) => e1.value.compareTo(e2.value)));
   late var sortedlist = sorted.values.toList();
   int _selectedIndex = 0;
-  
+  final MapController _mapController = MapController();
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => locationDialog(context));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      locationDialog(context);
+    });
   }
 
   void _onItemTapped(int index) {
@@ -50,22 +54,22 @@ class _MapDisplayState extends State<MapDisplay> {
 
   void locationDialog(context) {
     final appState = Provider.of<ApplicationState>(context, listen: false);
-    
+
     // First, check if there are any sites close enough
     if (sorted.isEmpty || sorted.values.first >= 30000.0) {
       // No sites nearby or sites too far away
       return;
     }
-    
+
     // Get the closest site
     String closestSiteName = sorted.keys.first;
-    
+
     // Check if the user has already visited this site
     if (widget.appState.hasVisited(closestSiteName)) {
       // Already visited, don't show dialog
       return;
     }
-    
+
     // Find the site information
     HistSite? selectedSite = widget.appState.historicalSites.firstWhere(
       (site) => site.name == closestSiteName,
@@ -116,12 +120,14 @@ class _MapDisplayState extends State<MapDisplay> {
               children: [
                 // Site image
                 ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(17.0)),
+                  borderRadius:
+                      const BorderRadius.vertical(top: Radius.circular(17.0)),
                   child: Container(
                     height: 180,
                     width: double.infinity,
                     color: const Color.fromARGB(255, 250, 235, 215),
-                    child: selectedSite.images.isNotEmpty && selectedSite.images.first != null
+                    child: selectedSite.images.isNotEmpty &&
+                            selectedSite.images.first != null
                         ? Image.memory(
                             selectedSite.images.first!,
                             fit: BoxFit.cover,
@@ -132,7 +138,7 @@ class _MapDisplayState extends State<MapDisplay> {
                           ),
                   ),
                 ),
-                
+
                 // Site name
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
@@ -148,10 +154,11 @@ class _MapDisplayState extends State<MapDisplay> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                
+
                 // Discovery message
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
                   child: Text(
                     "You have discovered a historical site!",
                     style: GoogleFonts.rakkas(
@@ -163,7 +170,7 @@ class _MapDisplayState extends State<MapDisplay> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                
+
                 // Buttons
                 Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
@@ -190,7 +197,7 @@ class _MapDisplayState extends State<MapDisplay> {
                           );
                         },
                       ),
-                      
+
                       // Discover Button
                       _buildRoundedButton(
                         context: context,
@@ -200,7 +207,8 @@ class _MapDisplayState extends State<MapDisplay> {
                           Navigator.of(context).pop();
                           // Mark site as visited for achievements
                           final achievementState = AchievementsPageState();
-                          achievementState.visitPlace(context, selectedSite.name);
+                          achievementState.visitPlace(
+                              context, selectedSite.name);
                           setState(() {
                             visited = true;
                           });
@@ -209,7 +217,7 @@ class _MapDisplayState extends State<MapDisplay> {
                     ],
                   ),
                 ),
-                
+
                 // Close button
                 Padding(
                   padding: const EdgeInsets.only(bottom: 16),
@@ -293,6 +301,19 @@ class _MapDisplayState extends State<MapDisplay> {
     );
   }
 
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    // Only run this once
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final target = widget.centerPosition ?? widget.currentPosition;
+      _mapController.move(target, 14.0);
+      print("CenterPosition = ${widget.centerPosition}");
+      print("CurrentPosition = ${widget.currentPosition}");
+      print("Map Reopened? ");
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<ApplicationState>(
@@ -320,7 +341,7 @@ class _MapDisplayState extends State<MapDisplay> {
             ),
           );
         }).toList();
-        
+
         // Add marker for current user position
         markers.add(Marker(
           point: widget.currentPosition,
@@ -329,12 +350,18 @@ class _MapDisplayState extends State<MapDisplay> {
             color: Colors.blue,
           ),
         ));
-        
+
         return Scaffold(
           backgroundColor: const Color.fromARGB(255, 238, 214, 196),
           body: FlutterMap(
+            mapController: _mapController,
+            key: ValueKey(widget.centerPosition ??
+                widget
+                    .currentPosition), // will force an update when map changes its centerPosition
             options: MapOptions(
-              initialCenter: widget.currentPosition,
+              initialCenter: widget.centerPosition == null
+                  ? widget.currentPosition
+                  : widget.centerPosition!,
               initialZoom: 14.0,
             ),
             children: [
@@ -355,11 +382,8 @@ class _MapDisplayState extends State<MapDisplay> {
   Map<String, double> getDistances(Map<String, LatLng> locations) {
     Map<String, double> distances = {};
     for (int i = 0; i < locations.length; i++) {
-      distances[locations.keys.elementAt(i)] = distance.as(
-        LengthUnit.Meter,
-        locations.values.elementAt(i), 
-        widget.currentPosition
-      );
+      distances[locations.keys.elementAt(i)] = distance.as(LengthUnit.Meter,
+          locations.values.elementAt(i), widget.currentPosition);
     }
     return distances;
   }
