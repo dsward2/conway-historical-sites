@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:faulkner_footsteps/app_state.dart';
 import 'package:faulkner_footsteps/dialogs/filter_Dialog.dart';
 import 'package:faulkner_footsteps/objects/hist_site.dart';
+import 'package:faulkner_footsteps/objects/site_filter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AchievementsPage extends StatefulWidget {
@@ -20,7 +21,8 @@ class ProgressAchievement {
   final String title;
   final String description;
   final List<String> requiredSites;
-  final SiteFilter? filterType;
+
+  final SiteFilter? filterType; // Fixed: Changed from siteFilter to SiteFilter
 
   ProgressAchievement(
       {required this.title,
@@ -68,10 +70,10 @@ class AchievementsPageState extends State<AchievementsPage> {
     List<String> hendrixSites = [];
 
     for (var site in widget.displaySites) {
-      for (SiteFilter filter in site.filters) {
-        if (filter.name == "Monument") {
-          monuments.add(site.name);
-        }
+
+      // Fixed: Changed from siteFilter.Monument to checking filter name
+      if (site.filters.any((filter) => filter.name == "Monument")) {
+        monuments.add(site.name);
       }
 
       // For demonstrative purposes, let's consider sites with "Hendrix" or "Hall" in the name
@@ -85,7 +87,10 @@ class AchievementsPageState extends State<AchievementsPage> {
         title: "Monument Explorer",
         description: "Visit all monument sites",
         requiredSites: monuments,
-        filterType: SiteFilter(name: "Monument")));
+
+        filterType:
+            SiteFilter(name: "Monument") // Fixed: Using SiteFilter constructor
+        ));
 
     // Add the Hendrix sites achievement
     if (hendrixSites.isNotEmpty) {
