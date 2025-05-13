@@ -15,6 +15,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:provider/provider.dart';
 import 'package:swipe_image_gallery/swipe_image_gallery.dart';
 import 'package:uuid/uuid.dart';
 
@@ -207,6 +208,7 @@ class _AdminListPageState extends State<AdminListPage> {
     List<InfoText> blurbs = [];
 
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -492,6 +494,7 @@ class _AdminListPageState extends State<AdminListPage> {
     final dateController = TextEditingController();
 
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
@@ -571,6 +574,7 @@ class _AdminListPageState extends State<AdminListPage> {
     List<InfoText> blurbs = List.from(site.blurbs);
 
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return StatefulBuilder(
@@ -916,6 +920,7 @@ class _AdminListPageState extends State<AdminListPage> {
     copyOfOriginalList.addAll(siteImages);
     copyOfOriginalURLList.addAll(siteImageURLs);
     return showDialog(
+        barrierDismissible: false,
         context: context,
         builder: (BuildContext context) {
           return StatefulBuilder(builder: (context, setState) {
@@ -1091,6 +1096,7 @@ class _AdminListPageState extends State<AdminListPage> {
     final dateController = TextEditingController(text: blurbs[index].date);
 
     return showDialog(
+      barrierDismissible: false,
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(

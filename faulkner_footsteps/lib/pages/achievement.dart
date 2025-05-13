@@ -1,3 +1,4 @@
+import 'package:faulkner_footsteps/objects/site_filter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:faulkner_footsteps/app_state.dart';
@@ -20,6 +21,7 @@ class ProgressAchievement {
   final String title;
   final String description;
   final List<String> requiredSites;
+
   final SiteFilter? filterType; // Fixed: Changed from siteFilter to SiteFilter
 
   ProgressAchievement(
@@ -68,6 +70,7 @@ class AchievementsPageState extends State<AchievementsPage> {
     List<String> hendrixSites = [];
 
     for (var site in widget.displaySites) {
+
       // Fixed: Changed from siteFilter.Monument to checking filter name
       if (site.filters.any((filter) => filter.name == "Monument")) {
         monuments.add(site.name);
@@ -84,6 +87,7 @@ class AchievementsPageState extends State<AchievementsPage> {
         title: "Monument Explorer",
         description: "Visit all monument sites",
         requiredSites: monuments,
+
         filterType:
             SiteFilter(name: "Monument") // Fixed: Using SiteFilter constructor
         ));

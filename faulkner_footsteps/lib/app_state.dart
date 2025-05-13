@@ -27,6 +27,7 @@ class ApplicationState extends ChangeNotifier {
   bool get loggedIn => _loggedIn;
 
   StreamSubscription<QuerySnapshot>? _siteSubscription;
+
   Set<String> _visitedPlaces = {};
   Set<String> get visitedPlaces => _visitedPlaces;
 
